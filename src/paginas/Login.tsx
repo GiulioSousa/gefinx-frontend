@@ -4,7 +4,7 @@ import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { extrairMensagemErro } from '../api/erros'
 
 export function Login() {
-  const { entrar } = useAutenticacao()
+  const { entrar, sessaoExpirada } = useAutenticacao()
   const navegar = useNavigate()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -30,6 +30,15 @@ export function Login() {
       <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Entrar</h1>
         <p className="mb-6 text-sm text-slate-500">Gerenciador Financeiro Pessoal</p>
+
+        {sessaoExpirada && !erro && (
+          <p
+            role="status"
+            className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+          >
+            Sua sessão expirou. Entre novamente para continuar.
+          </p>
+        )}
 
         <form onSubmit={aoSubmeter} className="space-y-4">
           <div>

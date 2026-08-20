@@ -1,10 +1,12 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as autenticacaoApi from '../api/autenticacaoApi'
+import { registrarTratamentoDeSessaoExpirada } from '../api/clienteApi'
 import type { Usuario } from '../tipos'
 
 interface ContextoAutenticacaoValor {
   usuario: Usuario | null
   carregando: boolean
+  sessaoExpirada: boolean
   entrar: (email: string, senha: string) => Promise<void>
   registrar: (nome: string, email: string, senha: string) => Promise<void>
   sair: () => void
@@ -12,9 +14,16 @@ interface ContextoAutenticacaoValor {
 
 const ContextoAutenticacao = createContext<ContextoAutenticacaoValor | undefined>(undefined)
 
+function limparArmazenamento() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('usuarioNome')
+  localStorage.removeItem('usuarioEmail')
+}
+
 export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [carregando, setCarregando] = useState(true)
+  const [sessaoExpirada, setSessaoExpirada] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -26,11 +35,22 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
     setCarregando(false)
   }, [])
 
+  const expirarSessao = useCallback(() => {
+    limparArmazenamento()
+    setUsuario(null)
+    setSessaoExpirada(true)
+  }, [])
+
+  useEffect(() => {
+    registrarTratamentoDeSessaoExpirada(expirarSessao)
+  }, [expirarSessao])
+
   function salvarSessao(token: string, nome: string, email: string) {
     localStorage.setItem('token', token)
     localStorage.setItem('usuarioNome', nome)
     localStorage.setItem('usuarioEmail', email)
     setUsuario({ nome, email })
+    setSessaoExpirada(false)
   }
 
   async function entrar(email: string, senha: string) {
@@ -44,14 +64,15 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
   }
 
   function sair() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('usuarioNome')
-    localStorage.removeItem('usuarioEmail')
+    limparArmazenamento()
     setUsuario(null)
+    setSessaoExpirada(false)
   }
 
   return (
-    <ContextoAutenticacao.Provider value={{ usuario, carregando, entrar, registrar, sair }}>
+    <ContextoAutenticacao.Provider
+      value={{ usuario, carregando, sessaoExpirada, entrar, registrar, sair }}
+    >
       {children}
     </ContextoAutenticacao.Provider>
   )
