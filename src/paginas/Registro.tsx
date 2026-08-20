@@ -59,9 +59,10 @@ export function Registro() {
               value={senha}
               onChange={(evento) => setSenha(evento.target.value)}
               required
-              minLength={6}
+              minLength={10}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             />
+            <p className="mt-1 text-xs text-slate-500">No mínimo 10 caracteres.</p>
           </div>
 
           {erro && <p className="text-sm text-red-600">{erro}</p>}
