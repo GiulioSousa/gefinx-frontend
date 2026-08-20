@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAutenticacao } from '../contextos/ContextoAutenticacao'
-import { extrairMensagemErro } from '../api/erros'
+import { ErroDeFormulario } from '../api/erros'
+import { ErroDeCampo } from '../componentes/ErroDeCampo'
 
 export function Login() {
   const { entrar, sessaoExpirada } = useAutenticacao()
@@ -9,17 +10,23 @@ export function Login() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
+  const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
   const [enviando, setEnviando] = useState(false)
+
+  const temErroDeCampo = Object.keys(errosPorCampo).length > 0
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
     setErro('')
+    setErrosPorCampo({})
     setEnviando(true)
     try {
       await entrar(email, senha)
       navegar('/')
     } catch (excecao) {
-      setErro(extrairMensagemErro(excecao, 'Não foi possível entrar'))
+      const falha = ErroDeFormulario.de(excecao, 'Não foi possível entrar')
+      setErro(falha.message)
+      setErrosPorCampo(falha.porCampo)
     } finally {
       setEnviando(false)
     }
@@ -50,6 +57,7 @@ export function Login() {
               required
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             />
+            <ErroDeCampo mensagem={errosPorCampo.email} />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Senha</label>
@@ -60,9 +68,10 @@ export function Login() {
               required
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             />
+            <ErroDeCampo mensagem={errosPorCampo.senha} />
           </div>
 
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
+          {erro && !temErroDeCampo && <p className="text-sm text-red-600">{erro}</p>}
 
           <button
             type="submit"

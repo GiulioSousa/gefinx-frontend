@@ -1,6 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import type { Categoria, TipoTransacao, Transacao } from '../tipos'
 import type { DadosTransacao } from '../api/transacoesApi'
+import { ErroDeFormulario } from '../api/erros'
+import { ErroDeCampo } from './ErroDeCampo'
 
 interface FormularioTransacaoProps {
   categorias: Categoria[]
@@ -21,12 +23,16 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
   const [dataTransacao, setDataTransacao] = useState(transacaoInicial?.dataTransacao ?? dataDeHoje())
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
+
+  const temErroDeCampo = Object.keys(errosPorCampo).length > 0
 
   const categoriasDoTipo = useMemo(() => categorias.filter((categoria) => categoria.tipo === tipo), [categorias, tipo])
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
     setErro('')
+    setErrosPorCampo({})
 
     if (categoriaId === '') {
       setErro('Selecione uma categoria')
@@ -43,7 +49,9 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
         dataTransacao,
       })
     } catch (excecao) {
-      setErro(excecao instanceof Error ? excecao.message : 'Não foi possível salvar a transação')
+      const falha = ErroDeFormulario.de(excecao, 'Não foi possível salvar a transação')
+      setErro(falha.message)
+      setErrosPorCampo(falha.porCampo)
     } finally {
       setSalvando(false)
     }
@@ -61,6 +69,7 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             placeholder="Ex: Supermercado"
           />
+          <ErroDeCampo mensagem={errosPorCampo.descricao} />
         </div>
 
         <div>
@@ -90,6 +99,7 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             placeholder="0,00"
           />
+          <ErroDeCampo mensagem={errosPorCampo.valor} />
         </div>
 
         <div>
@@ -109,6 +119,7 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
               </option>
             ))}
           </select>
+          <ErroDeCampo mensagem={errosPorCampo.categoriaId} />
         </div>
 
         <div>
@@ -120,10 +131,11 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
             required
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
           />
+          <ErroDeCampo mensagem={errosPorCampo.dataTransacao} />
         </div>
       </div>
 
-      {erro && <p className="mt-3 text-sm text-red-600">{erro}</p>}
+      {erro && !temErroDeCampo && <p className="mt-3 text-sm text-red-600">{erro}</p>}
 
       <div className="mt-4 flex gap-2">
         <button

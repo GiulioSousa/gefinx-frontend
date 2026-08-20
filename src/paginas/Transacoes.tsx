@@ -4,7 +4,7 @@ import { listarCategorias } from '../api/categoriasApi'
 import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
-import { extrairMensagemErro } from '../api/erros'
+import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -63,7 +63,8 @@ export function Transacoes() {
       setTransacaoEmEdicao(undefined)
       await carregarDados()
     } catch (excecao) {
-      throw new Error(extrairMensagemErro(excecao, 'Não foi possível salvar a transação'))
+      // Ver Categorias.tsx: a conversão para Error descartava o mapa por campo.
+      throw ErroDeFormulario.de(excecao, 'Não foi possível salvar a transação')
     }
   }
 

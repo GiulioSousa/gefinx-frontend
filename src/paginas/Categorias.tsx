@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Categoria, TipoTransacao } from '../tipos'
 import * as categoriasApi from '../api/categoriasApi'
 import { FormularioCategoria } from '../componentes/FormularioCategoria'
-import { extrairMensagemErro } from '../api/erros'
+import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 
 export function Categorias() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -47,7 +47,9 @@ export function Categorias() {
       setCategoriaEmEdicao(undefined)
       await carregarDados()
     } catch (excecao) {
-      throw new Error(extrairMensagemErro(excecao, 'Não foi possível salvar a categoria'))
+      // Repassa o erro inteiro, e não só a mensagem: o formulário precisa do mapa por
+      // campo, que uma conversão para Error deixaria pelo caminho.
+      throw ErroDeFormulario.de(excecao, 'Não foi possível salvar a categoria')
     }
   }
 

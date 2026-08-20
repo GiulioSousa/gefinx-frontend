@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAutenticacao } from '../contextos/ContextoAutenticacao'
-import { extrairMensagemErro } from '../api/erros'
+import { ErroDeFormulario } from '../api/erros'
+import { ErroDeCampo } from '../componentes/ErroDeCampo'
 
 export function Registro() {
   const { registrar } = useAutenticacao()
@@ -10,17 +11,25 @@ export function Registro() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
+  const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
   const [enviando, setEnviando] = useState(false)
+
+  // Com o campo culpado apontado, a mensagem geral vira ruído: ela diria "Dados
+  // inválidos" logo acima da linha que já diz qual dado e por quê.
+  const temErroDeCampo = Object.keys(errosPorCampo).length > 0
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
     setErro('')
+    setErrosPorCampo({})
     setEnviando(true)
     try {
       await registrar(nome, email, senha)
       navegar('/')
     } catch (excecao) {
-      setErro(extrairMensagemErro(excecao, 'Não foi possível criar a conta'))
+      const falha = ErroDeFormulario.de(excecao, 'Não foi possível criar a conta')
+      setErro(falha.message)
+      setErrosPorCampo(falha.porCampo)
     } finally {
       setEnviando(false)
     }
@@ -41,6 +50,7 @@ export function Registro() {
               required
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             />
+            <ErroDeCampo mensagem={errosPorCampo.nome} />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">E-mail</label>
@@ -51,6 +61,7 @@ export function Registro() {
               required
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             />
+            <ErroDeCampo mensagem={errosPorCampo.email} />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Senha</label>
@@ -62,10 +73,11 @@ export function Registro() {
               minLength={10}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             />
+            <ErroDeCampo mensagem={errosPorCampo.senha} />
             <p className="mt-1 text-xs text-slate-500">No mínimo 10 caracteres.</p>
           </div>
 
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
+          {erro && !temErroDeCampo && <p className="text-sm text-red-600">{erro}</p>}
 
           <button
             type="submit"

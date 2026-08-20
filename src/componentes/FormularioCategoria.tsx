@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Categoria, TipoTransacao } from '../tipos'
+import { ErroDeFormulario } from '../api/erros'
+import { ErroDeCampo } from './ErroDeCampo'
 
 interface FormularioCategoriaProps {
   categoriaInicial?: Categoria
@@ -12,15 +14,21 @@ export function FormularioCategoria({ categoriaInicial, aoSalvar, aoCancelar }: 
   const [tipo, setTipo] = useState<TipoTransacao>(categoriaInicial?.tipo ?? 'DESPESA')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
+
+  const temErroDeCampo = Object.keys(errosPorCampo).length > 0
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
     setErro('')
+    setErrosPorCampo({})
     setSalvando(true)
     try {
       await aoSalvar(nome, tipo)
     } catch (excecao) {
-      setErro(excecao instanceof Error ? excecao.message : 'Não foi possível salvar a categoria')
+      const falha = ErroDeFormulario.de(excecao, 'Não foi possível salvar a categoria')
+      setErro(falha.message)
+      setErrosPorCampo(falha.porCampo)
     } finally {
       setSalvando(false)
     }
@@ -38,6 +46,7 @@ export function FormularioCategoria({ categoriaInicial, aoSalvar, aoCancelar }: 
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
             placeholder="Ex: Educação"
           />
+          <ErroDeCampo mensagem={errosPorCampo.nome} />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Tipo</label>
@@ -52,7 +61,7 @@ export function FormularioCategoria({ categoriaInicial, aoSalvar, aoCancelar }: 
         </div>
       </div>
 
-      {erro && <p className="mt-3 text-sm text-red-600">{erro}</p>}
+      {erro && !temErroDeCampo && <p className="mt-3 text-sm text-red-600">{erro}</p>}
 
       <div className="mt-4 flex gap-2">
         <button
