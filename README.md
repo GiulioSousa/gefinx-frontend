@@ -4,8 +4,9 @@ Interface web do **GeFinX**, um gerenciador financeiro pessoal: o usuário cadas
 despesas classificadas por categoria e acompanha o saldo.
 
 React 19 com Vite e Tailwind, consumindo a API REST que vive em repositório próprio,
-`gefinx-backend`. Os dois são independentes de propósito — o objetivo de médio prazo do projeto é
-extrair alguns contextos do back-end como serviços separados.
+[gefinx-backend](https://github.com/GiulioSousa/gefinx-backend). Os dois são independentes de
+propósito — o objetivo de médio prazo do projeto é extrair alguns contextos do back-end como
+serviços separados.
 
 > Projeto pessoal, de estudo, sem uso comercial.
 
