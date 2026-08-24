@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { buscarSaldo, listarTransacoes } from '../api/transacoesApi'
-import type { Saldo, Transacao } from '../tipos'
+import { listarContas } from '../api/contasApi'
+import type { Conta, Saldo, Transacao } from '../tipos'
 import { extrairMensagemErro } from '../api/erros'
 
 function formatarMoeda(valor: number): string {
@@ -14,15 +15,21 @@ function formatarData(data: string): string {
 export function Painel() {
   const [saldo, setSaldo] = useState<Saldo | null>(null)
   const [transacoesRecentes, setTransacoesRecentes] = useState<Transacao[]>([])
+  const [contas, setContas] = useState<Conta[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
 
   useEffect(() => {
     async function carregar() {
       try {
-        const [saldoObtido, transacoes] = await Promise.all([buscarSaldo(), listarTransacoes()])
+        const [saldoObtido, transacoes, contasObtidas] = await Promise.all([
+          buscarSaldo(),
+          listarTransacoes(),
+          listarContas(),
+        ])
         setSaldo(saldoObtido)
         setTransacoesRecentes(transacoes.slice(0, 5))
+        setContas(contasObtidas)
       } catch (excecao) {
         setErro(extrairMensagemErro(excecao, 'Não foi possível carregar o painel'))
       } finally {
@@ -57,6 +64,32 @@ export function Painel() {
             {formatarMoeda(saldo?.saldo ?? 0)}
           </p>
         </div>
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-slate-900">Saldo por conta</h2>
+        {contas.length === 0 ? (
+          <p className="text-sm text-slate-500">Nenhuma conta cadastrada.</p>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <tbody className="divide-y divide-slate-100">
+                {contas.map((conta) => (
+                  <tr key={conta.id}>
+                    <td className="px-4 py-2 text-slate-900">{conta.nome}</td>
+                    <td
+                      className={`px-4 py-2 text-right font-medium ${
+                        conta.saldo >= 0 ? 'text-slate-900' : 'text-red-600'
+                      }`}
+                    >
+                      {formatarMoeda(conta.saldo)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div>
