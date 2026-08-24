@@ -11,6 +11,12 @@ export interface Categoria {
   tipo: TipoTransacao
 }
 
+export interface Conta {
+  id: number
+  nome: string
+  saldo: number
+}
+
 export interface Transacao {
   id: number
   descricao: string
@@ -19,6 +25,8 @@ export interface Transacao {
   dataTransacao: string
   categoriaId: number
   nomeCategoria: string
+  contaId: number
+  nomeConta: string
 }
 
 export interface Saldo {
