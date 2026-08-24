@@ -6,6 +6,7 @@ export interface DadosTransacao {
   valor: number
   tipo: TipoTransacao
   categoriaId: number
+  contaId: number
   dataTransacao: string
 }
 
@@ -28,7 +29,10 @@ export async function excluirTransacao(id: number): Promise<void> {
   await clienteApi.delete(`/transacoes/${id}`)
 }
 
-export async function buscarSaldo(): Promise<Saldo> {
-  const { data } = await clienteApi.get<Saldo>('/saldo')
+/** Sem `contaId`, o consolidado de todas as contas; com ele, só aquela conta. */
+export async function buscarSaldo(contaId?: number): Promise<Saldo> {
+  const { data } = await clienteApi.get<Saldo>('/saldo', {
+    params: contaId === undefined ? undefined : { contaId },
+  })
   return data
 }

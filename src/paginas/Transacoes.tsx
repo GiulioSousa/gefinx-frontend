@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { Categoria, Transacao } from '../tipos'
+import type { Categoria, Conta, Transacao } from '../tipos'
 import { listarCategorias } from '../api/categoriasApi'
+import { listarContas } from '../api/contasApi'
 import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
@@ -17,6 +18,7 @@ function formatarData(data: string): string {
 export function Transacoes() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [contas, setContas] = useState<Conta[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
@@ -25,12 +27,14 @@ export function Transacoes() {
   async function carregarDados() {
     setCarregando(true)
     try {
-      const [transacoesObtidas, categoriasObtidas] = await Promise.all([
+      const [transacoesObtidas, categoriasObtidas, contasObtidas] = await Promise.all([
         transacoesApi.listarTransacoes(),
         listarCategorias(),
+        listarContas(),
       ])
       setTransacoes(transacoesObtidas)
       setCategorias(categoriasObtidas)
+      setContas(contasObtidas)
     } catch (excecao) {
       setErro(extrairMensagemErro(excecao, 'Não foi possível carregar as transações'))
     } finally {
@@ -103,6 +107,7 @@ export function Transacoes() {
       {mostrarFormulario && (
         <FormularioTransacao
           categorias={categorias}
+          contas={contas}
           transacaoInicial={transacaoEmEdicao}
           aoSalvar={salvar}
           aoCancelar={() => {
@@ -121,6 +126,7 @@ export function Transacoes() {
               <tr>
                 <th className="px-4 py-2 font-medium">Descrição</th>
                 <th className="px-4 py-2 font-medium">Categoria</th>
+                <th className="px-4 py-2 font-medium">Conta</th>
                 <th className="px-4 py-2 font-medium">Data</th>
                 <th className="px-4 py-2 text-right font-medium">Valor</th>
                 <th className="px-4 py-2 text-right font-medium">Ações</th>
@@ -131,6 +137,7 @@ export function Transacoes() {
                 <tr key={transacao.id}>
                   <td className="px-4 py-2 text-slate-900">{transacao.descricao}</td>
                   <td className="px-4 py-2 text-slate-500">{transacao.nomeCategoria}</td>
+                  <td className="px-4 py-2 text-slate-500">{transacao.nomeConta}</td>
                   <td className="px-4 py-2 text-slate-500">{formatarData(transacao.dataTransacao)}</td>
                   <td
                     className={`px-4 py-2 text-right font-medium ${

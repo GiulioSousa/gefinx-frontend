@@ -1,11 +1,12 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import type { Categoria, TipoTransacao, Transacao } from '../tipos'
+import type { Categoria, Conta, TipoTransacao, Transacao } from '../tipos'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from './ErroDeCampo'
 
 interface FormularioTransacaoProps {
   categorias: Categoria[]
+  contas: Conta[]
   transacaoInicial?: Transacao
   aoSalvar: (dados: DadosTransacao) => Promise<void>
   aoCancelar: () => void
@@ -15,11 +16,23 @@ function dataDeHoje(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, aoCancelar }: FormularioTransacaoProps) {
+export function FormularioTransacao({
+  categorias,
+  contas,
+  transacaoInicial,
+  aoSalvar,
+  aoCancelar,
+}: FormularioTransacaoProps) {
   const [descricao, setDescricao] = useState(transacaoInicial?.descricao ?? '')
   const [valor, setValor] = useState(transacaoInicial ? String(transacaoInicial.valor) : '')
   const [tipo, setTipo] = useState<TipoTransacao>(transacaoInicial?.tipo ?? 'DESPESA')
   const [categoriaId, setCategoriaId] = useState<number | ''>(transacaoInicial?.categoriaId ?? '')
+  // Pré-seleciona quando só existe uma conta: nesse caso não há escolha a fazer, e
+  // obrigar o clique seria atrito sem informação. Com duas ou mais, quem escolhe é o
+  // usuário — escolher por ele lançaria dinheiro na conta errada em silêncio.
+  const [contaId, setContaId] = useState<number | ''>(
+    transacaoInicial?.contaId ?? (contas.length === 1 ? contas[0].id : '')
+  )
   const [dataTransacao, setDataTransacao] = useState(transacaoInicial?.dataTransacao ?? dataDeHoje())
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -39,6 +52,11 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
       return
     }
 
+    if (contaId === '') {
+      setErro('Selecione uma conta')
+      return
+    }
+
     setSalvando(true)
     try {
       await aoSalvar({
@@ -46,6 +64,7 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
         valor: Number(valor),
         tipo,
         categoriaId,
+        contaId,
         dataTransacao,
       })
     } catch (excecao) {
@@ -120,6 +139,26 @@ export function FormularioTransacao({ categorias, transacaoInicial, aoSalvar, ao
             ))}
           </select>
           <ErroDeCampo mensagem={errosPorCampo.categoriaId} />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Conta</label>
+          <select
+            value={contaId}
+            onChange={(evento) => setContaId(Number(evento.target.value))}
+            required
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+          >
+            <option value="" disabled>
+              Selecione...
+            </option>
+            {contas.map((conta) => (
+              <option key={conta.id} value={conta.id}>
+                {conta.nome}
+              </option>
+            ))}
+          </select>
+          <ErroDeCampo mensagem={errosPorCampo.contaId} />
         </div>
 
         <div>
