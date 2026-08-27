@@ -1,17 +1,17 @@
 import { useState, type FormEvent } from 'react'
-import type { Categoria, TipoTransacao } from '../tipos'
+import type { Categoria, TipoCategoria } from '../tipos'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from './ErroDeCampo'
 
 interface FormularioCategoriaProps {
   categoriaInicial?: Categoria
-  aoSalvar: (nome: string, tipo: TipoTransacao) => Promise<void>
+  aoSalvar: (nome: string, tipo: TipoCategoria) => Promise<void>
   aoCancelar: () => void
 }
 
 export function FormularioCategoria({ categoriaInicial, aoSalvar, aoCancelar }: FormularioCategoriaProps) {
   const [nome, setNome] = useState(categoriaInicial?.nome ?? '')
-  const [tipo, setTipo] = useState<TipoTransacao>(categoriaInicial?.tipo ?? 'DESPESA')
+  const [tipo, setTipo] = useState<TipoCategoria>(categoriaInicial?.tipo ?? 'DESPESA')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
@@ -52,7 +52,7 @@ export function FormularioCategoria({ categoriaInicial, aoSalvar, aoCancelar }: 
           <label className="mb-1 block text-sm font-medium text-slate-700">Tipo</label>
           <select
             value={tipo}
-            onChange={(evento) => setTipo(evento.target.value as TipoTransacao)}
+            onChange={(evento) => setTipo(evento.target.value as TipoCategoria)}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
           >
             <option value="DESPESA">Despesa</option>

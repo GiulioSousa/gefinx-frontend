@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Categoria, TipoTransacao } from '../tipos'
+import type { Categoria, TipoCategoria } from '../tipos'
 import * as categoriasApi from '../api/categoriasApi'
 import { FormularioCategoria } from '../componentes/FormularioCategoria'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
@@ -36,7 +36,7 @@ export function Categorias() {
     setMostrarFormulario(true)
   }
 
-  async function salvar(nome: string, tipo: TipoTransacao) {
+  async function salvar(nome: string, tipo: TipoCategoria) {
     try {
       if (categoriaEmEdicao) {
         await categoriasApi.atualizarCategoria(categoriaEmEdicao.id, nome, tipo)

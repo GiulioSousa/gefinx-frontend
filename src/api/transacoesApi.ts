@@ -1,12 +1,17 @@
 import { clienteApi } from './clienteApi'
 import type { Saldo, TipoTransacao, Transacao } from '../tipos'
 
+/**
+ * `categoriaId` e `contaDestinoId` são mutuamente exclusivos, conforme o tipo:
+ * transferência leva destino e não leva categoria; receita e despesa, o inverso.
+ */
 export interface DadosTransacao {
   descricao: string
   valor: number
   tipo: TipoTransacao
-  categoriaId: number
+  categoriaId?: number
   contaId: number
+  contaDestinoId?: number
   dataTransacao: string
 }
 

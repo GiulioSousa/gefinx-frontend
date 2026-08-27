@@ -1,4 +1,7 @@
-export type TipoTransacao = 'RECEITA' | 'DESPESA'
+export type TipoTransacao = 'RECEITA' | 'DESPESA' | 'TRANSFERENCIA'
+
+/** Categoria nunca é TRANSFERENCIA: esse tipo pertence só à transação. */
+export type TipoCategoria = 'RECEITA' | 'DESPESA'
 
 export interface Usuario {
   nome: string
@@ -8,7 +11,7 @@ export interface Usuario {
 export interface Categoria {
   id: number
   nome: string
-  tipo: TipoTransacao
+  tipo: TipoCategoria
 }
 
 export interface Conta {
@@ -23,15 +26,18 @@ export interface Transacao {
   valor: number
   tipo: TipoTransacao
   dataTransacao: string
-  categoriaId: number
-  nomeCategoria: string
+  categoriaId: number | null
+  nomeCategoria: string | null
   contaId: number
   nomeConta: string
+  contaDestinoId: number | null
+  nomeContaDestino: string | null
 }
 
 export interface Saldo {
   totalReceitas: number
   totalDespesas: number
+  totalTransferencias: number
   saldo: number
 }
 
