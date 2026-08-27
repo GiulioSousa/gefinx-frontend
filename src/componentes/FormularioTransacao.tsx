@@ -33,27 +33,53 @@ export function FormularioTransacao({
   const [contaId, setContaId] = useState<number | ''>(
     transacaoInicial?.contaId ?? (contas.length === 1 ? contas[0].id : '')
   )
+  const [contaDestinoId, setContaDestinoId] = useState<number | ''>(transacaoInicial?.contaDestinoId ?? '')
   const [dataTransacao, setDataTransacao] = useState(transacaoInicial?.dataTransacao ?? dataDeHoje())
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
 
+  const ehTransferencia = tipo === 'TRANSFERENCIA'
   const temErroDeCampo = Object.keys(errosPorCampo).length > 0
+  const contasInsuficientes = ehTransferencia && contas.length < 2
 
-  const categoriasDoTipo = useMemo(() => categorias.filter((categoria) => categoria.tipo === tipo), [categorias, tipo])
+  const categoriasDoTipo = useMemo(
+    () => categorias.filter((categoria) => categoria.tipo === tipo),
+    [categorias, tipo]
+  )
+
+  // A conta de origem não pode ser destino de si mesma: tirá-la da lista evita oferecer
+  // uma opção que o servidor recusaria.
+  const contasDeDestino = useMemo(
+    () => contas.filter((conta) => conta.id !== contaId),
+    [contas, contaId]
+  )
+
+  function trocarTipo(novoTipo: TipoTransacao) {
+    setTipo(novoTipo)
+    // Os dois campos são exclusivos entre si; deixar o valor antigo faria a requisição
+    // carregar um campo que não pertence ao formato escolhido.
+    setCategoriaId('')
+    setContaDestinoId('')
+  }
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
     setErro('')
     setErrosPorCampo({})
 
-    if (categoriaId === '') {
-      setErro('Selecione uma categoria')
+    if (contaId === '') {
+      setErro('Selecione uma conta')
       return
     }
 
-    if (contaId === '') {
-      setErro('Selecione uma conta')
+    if (ehTransferencia) {
+      if (contaDestinoId === '') {
+        setErro('Selecione a conta de destino')
+        return
+      }
+    } else if (categoriaId === '') {
+      setErro('Selecione uma categoria')
       return
     }
 
@@ -63,8 +89,9 @@ export function FormularioTransacao({
         descricao,
         valor: Number(valor),
         tipo,
-        categoriaId,
         contaId,
+        categoriaId: ehTransferencia ? undefined : (categoriaId as number),
+        contaDestinoId: ehTransferencia ? (contaDestinoId as number) : undefined,
         dataTransacao,
       })
     } catch (excecao) {
@@ -86,7 +113,7 @@ export function FormularioTransacao({
             onChange={(evento) => setDescricao(evento.target.value)}
             required
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-            placeholder="Ex: Supermercado"
+            placeholder={ehTransferencia ? 'Ex: Reserva do mes' : 'Ex: Supermercado'}
           />
           <ErroDeCampo mensagem={errosPorCampo.descricao} />
         </div>
@@ -95,14 +122,12 @@ export function FormularioTransacao({
           <label className="mb-1 block text-sm font-medium text-slate-700">Tipo</label>
           <select
             value={tipo}
-            onChange={(evento) => {
-              setTipo(evento.target.value as TipoTransacao)
-              setCategoriaId('')
-            }}
+            onChange={(evento) => trocarTipo(evento.target.value as TipoTransacao)}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
           >
             <option value="DESPESA">Despesa</option>
             <option value="RECEITA">Receita</option>
+            <option value="TRANSFERENCIA">Transferência</option>
           </select>
         </div>
 
@@ -121,28 +146,32 @@ export function FormularioTransacao({
           <ErroDeCampo mensagem={errosPorCampo.valor} />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Categoria</label>
-          <select
-            value={categoriaId}
-            onChange={(evento) => setCategoriaId(Number(evento.target.value))}
-            required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-          >
-            <option value="" disabled>
-              Selecione...
-            </option>
-            {categoriasDoTipo.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.nome}
+        {!ehTransferencia && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Categoria</label>
+            <select
+              value={categoriaId}
+              onChange={(evento) => setCategoriaId(Number(evento.target.value))}
+              required
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="" disabled>
+                Selecione...
               </option>
-            ))}
-          </select>
-          <ErroDeCampo mensagem={errosPorCampo.categoriaId} />
-        </div>
+              {categoriasDoTipo.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nome}
+                </option>
+              ))}
+            </select>
+            <ErroDeCampo mensagem={errosPorCampo.categoriaId} />
+          </div>
+        )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Conta</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            {ehTransferencia ? 'Conta de origem' : 'Conta'}
+          </label>
           <select
             value={contaId}
             onChange={(evento) => setContaId(Number(evento.target.value))}
@@ -161,6 +190,28 @@ export function FormularioTransacao({
           <ErroDeCampo mensagem={errosPorCampo.contaId} />
         </div>
 
+        {ehTransferencia && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Conta de destino</label>
+            <select
+              value={contaDestinoId}
+              onChange={(evento) => setContaDestinoId(Number(evento.target.value))}
+              required
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="" disabled>
+                Selecione...
+              </option>
+              {contasDeDestino.map((conta) => (
+                <option key={conta.id} value={conta.id}>
+                  {conta.nome}
+                </option>
+              ))}
+            </select>
+            <ErroDeCampo mensagem={errosPorCampo.contaDestinoId} />
+          </div>
+        )}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Data</label>
           <input
@@ -174,12 +225,25 @@ export function FormularioTransacao({
         </div>
       </div>
 
+      {ehTransferencia && (
+        <p className="mt-3 text-xs text-slate-500">
+          Transferência move dinheiro entre suas contas: não entra como receita nem como despesa, e o saldo
+          consolidado não muda.
+        </p>
+      )}
+
+      {contasInsuficientes && (
+        <p className="mt-3 text-sm text-amber-700">
+          É preciso ter pelo menos duas contas para transferir. Cadastre outra na tela de Contas.
+        </p>
+      )}
+
       {erro && !temErroDeCampo && <p className="mt-3 text-sm text-red-600">{erro}</p>}
 
       <div className="mt-4 flex gap-2">
         <button
           type="submit"
-          disabled={salvando}
+          disabled={salvando || contasInsuficientes}
           className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
         >
           {salvando ? 'Salvando...' : 'Salvar'}

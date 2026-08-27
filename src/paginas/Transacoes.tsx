@@ -136,15 +136,28 @@ export function Transacoes() {
               {transacoes.map((transacao) => (
                 <tr key={transacao.id}>
                   <td className="px-4 py-2 text-slate-900">{transacao.descricao}</td>
-                  <td className="px-4 py-2 text-slate-500">{transacao.nomeCategoria}</td>
-                  <td className="px-4 py-2 text-slate-500">{transacao.nomeConta}</td>
+                  <td className="px-4 py-2 text-slate-500">{transacao.nomeCategoria ?? '—'}</td>
+                  <td className="px-4 py-2 text-slate-500">
+                    {transacao.nomeContaDestino
+                      ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
+                      : transacao.nomeConta}
+                  </td>
                   <td className="px-4 py-2 text-slate-500">{formatarData(transacao.dataTransacao)}</td>
+                  {/*
+                    Transferência fica em cinza e sem sinal: verde ou vermelho diriam que o
+                    patrimônio subiu ou desceu, e ele não mudou — o dinheiro só trocou de conta.
+                  */}
                   <td
                     className={`px-4 py-2 text-right font-medium ${
-                      transacao.tipo === 'RECEITA' ? 'text-emerald-600' : 'text-red-600'
+                      transacao.tipo === 'TRANSFERENCIA'
+                        ? 'text-slate-600'
+                        : transacao.tipo === 'RECEITA'
+                          ? 'text-emerald-600'
+                          : 'text-red-600'
                     }`}
                   >
-                    {transacao.tipo === 'RECEITA' ? '+' : '-'} {formatarMoeda(transacao.valor)}
+                    {transacao.tipo === 'TRANSFERENCIA' ? '' : transacao.tipo === 'RECEITA' ? '+ ' : '- '}
+                    {formatarMoeda(transacao.valor)}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <button
