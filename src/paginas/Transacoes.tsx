@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react'
-import type { Categoria, Conta, Transacao } from '../tipos'
+import { useCallback, useEffect, useState } from 'react'
+import type { Categoria, Conta, FiltroTransacoes, Transacao } from '../tipos'
 import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
 import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
-import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
+import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
+
+/** O mesmo padrão da API. Cabe numa tela sem rolagem longa e sobra folga até o teto de 100. */
+const TAMANHO_DA_PAGINA = 20
+
+const ENTRADA = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -24,27 +29,91 @@ export function Transacoes() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [transacaoEmEdicao, setTransacaoEmEdicao] = useState<Transacao | undefined>(undefined)
 
-  async function carregarDados() {
+  const [pagina, setPagina] = useState(0)
+  const [filtro, setFiltro] = useState<FiltroTransacoes>({})
+  const [totalItens, setTotalItens] = useState(0)
+  const [totalPaginas, setTotalPaginas] = useState(0)
+
+  /**
+   * O `signal` não é detalhe: mudar dois filtros em seguida põe duas buscas no ar, e sem
+   * cancelar a anterior é a resposta mais lenta que pinta a tela, não a mais recente. Isso
+   * foi observado de verdade — a lista mostrava o recorte do filtro anterior enquanto a URL
+   * pedida já era a certa, de modo que a tela discordava do que o usuário tinha acabado de
+   * escolher, sem nenhum sinal de erro.
+   */
+  const carregarTransacoes = useCallback(async (signal?: AbortSignal) => {
     setCarregando(true)
     try {
-      const [transacoesObtidas, categoriasObtidas, contasObtidas] = await Promise.all([
-        transacoesApi.listarTransacoes(),
-        listarCategorias(),
-        listarContas(),
-      ])
-      setTransacoes(transacoesObtidas)
-      setCategorias(categoriasObtidas)
-      setContas(contasObtidas)
+      const resultado = await transacoesApi.listarTransacoes(
+        pagina,
+        TAMANHO_DA_PAGINA,
+        filtro,
+        signal,
+      )
+      setTransacoes(resultado.itens)
+      setTotalItens(resultado.totalItens)
+      setTotalPaginas(resultado.totalPaginas)
+
+      // Excluir o último item de uma página deixaria a tela vazia com o histórico cheio,
+      // parecendo que os lançamentos sumiram. Recuar uma página devolve o usuário ao lugar
+      // onde ainda há o que ver.
+      if (resultado.itens.length === 0 && pagina > 0) {
+        setPagina(pagina - 1)
+      }
     } catch (excecao) {
+      // Cancelada é o caminho normal de quem trocou de filtro: quem a substituiu vai
+      // desligar o "Carregando" quando chegar, e um aviso aqui seria erro inventado.
+      if (foiCancelada(excecao)) {
+        return
+      }
       setErro(extrairMensagemErro(excecao, 'Não foi possível carregar as transações'))
     } finally {
-      setCarregando(false)
+      if (!signal?.aborted) {
+        setCarregando(false)
+      }
     }
+  }, [pagina, filtro])
+
+  /** Categorias e contas não mudam com a página nem com o filtro: são buscadas uma vez. */
+  useEffect(() => {
+    async function carregarReferencias() {
+      try {
+        const [categoriasObtidas, contasObtidas] = await Promise.all([
+          listarCategorias(),
+          listarContas(),
+        ])
+        setCategorias(categoriasObtidas)
+        setContas(contasObtidas)
+      } catch (excecao) {
+        setErro(extrairMensagemErro(excecao, 'Não foi possível carregar categorias e contas'))
+      }
+    }
+    carregarReferencias()
+  }, [])
+
+  // Recarrega quando a página ou o filtro mudam — que são exatamente as duas coisas que
+  // alteram o recorte pedido ao servidor, e as mesmas que definem esta função. A limpeza
+  // aborta a busca anterior, para que só a do recorte atual chegue à tela.
+  useEffect(() => {
+    const controlador = new AbortController()
+    carregarTransacoes(controlador.signal)
+    return () => controlador.abort()
+  }, [carregarTransacoes])
+
+  /**
+   * Toda mudança de filtro volta para a primeira página. Sem isso, quem estivesse na página
+   * 4 e filtrasse por um recorte de duas páginas cairia num vazio, e concluiria que o filtro
+   * não encontrou nada.
+   */
+  function ajustarFiltro(mudanca: Partial<FiltroTransacoes>) {
+    setFiltro((atual) => ({ ...atual, ...mudanca }))
+    setPagina(0)
   }
 
-  useEffect(() => {
-    carregarDados()
-  }, [])
+  function limparFiltros() {
+    setFiltro({})
+    setPagina(0)
+  }
 
   function abrirNovoFormulario() {
     setTransacaoEmEdicao(undefined)
@@ -68,7 +137,7 @@ export function Transacoes() {
       // O aviso descrevia uma falha anterior que o salvamento acabou de tornar passado.
       // Deixá-lo na tela faz a interface afirmar algo que já não é verdade.
       setErro('')
-      await carregarDados()
+      await carregarTransacoes()
     } catch (excecao) {
       // Ver Categorias.tsx: a conversão para Error descartava o mapa por campo.
       throw ErroDeFormulario.de(excecao, 'Não foi possível salvar a transação')
@@ -82,15 +151,15 @@ export function Transacoes() {
     try {
       await transacoesApi.excluirTransacao(id)
       setErro('')
-      await carregarDados()
+      await carregarTransacoes()
     } catch (excecao) {
       setErro(extrairMensagemErro(excecao, 'Não foi possível excluir a transação'))
     }
   }
 
-  if (carregando) {
-    return <p className="text-slate-500">Carregando...</p>
-  }
+  const temFiltro = Object.values(filtro).some((valor) => valor !== undefined && valor !== '')
+  const primeiroDaPagina = totalItens === 0 ? 0 : pagina * TAMANHO_DA_PAGINA + 1
+  const ultimoDaPagina = pagina * TAMANHO_DA_PAGINA + transacoes.length
 
   return (
     <div className="space-y-6">
@@ -121,8 +190,95 @@ export function Transacoes() {
         />
       )}
 
-      {transacoes.length === 0 ? (
-        <p className="text-sm text-slate-500">Nenhuma transação cadastrada ainda.</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <label className="text-sm text-slate-600">
+            De
+            <input
+              type="date"
+              value={filtro.dataInicio ?? ''}
+              onChange={(evento) => ajustarFiltro({ dataInicio: evento.target.value || undefined })}
+              className={ENTRADA}
+            />
+          </label>
+          <label className="text-sm text-slate-600">
+            Até
+            <input
+              type="date"
+              value={filtro.dataFim ?? ''}
+              onChange={(evento) => ajustarFiltro({ dataFim: evento.target.value || undefined })}
+              className={ENTRADA}
+            />
+          </label>
+          <label className="text-sm text-slate-600">
+            Tipo
+            <select
+              value={filtro.tipo ?? ''}
+              onChange={(evento) =>
+                ajustarFiltro({ tipo: (evento.target.value || undefined) as FiltroTransacoes['tipo'] })
+              }
+              className={ENTRADA}
+            >
+              <option value="">Todos</option>
+              <option value="RECEITA">Receita</option>
+              <option value="DESPESA">Despesa</option>
+              <option value="TRANSFERENCIA">Transferência</option>
+            </select>
+          </label>
+          <label className="text-sm text-slate-600">
+            Conta
+            <select
+              value={filtro.contaId ?? ''}
+              onChange={(evento) =>
+                ajustarFiltro({ contaId: evento.target.value ? Number(evento.target.value) : undefined })
+              }
+              className={ENTRADA}
+            >
+              <option value="">Todas</option>
+              {contas.map((conta) => (
+                <option key={conta.id} value={conta.id}>
+                  {conta.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-slate-600">
+            Categoria
+            <select
+              value={filtro.categoriaId ?? ''}
+              onChange={(evento) =>
+                ajustarFiltro({ categoriaId: evento.target.value ? Number(evento.target.value) : undefined })
+              }
+              className={ENTRADA}
+            >
+              <option value="">Todas</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {temFiltro && (
+          <button
+            onClick={limparFiltros}
+            className="mt-3 text-sm font-medium text-emerald-600 hover:underline"
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
+
+      {carregando ? (
+        <p className="text-slate-500">Carregando...</p>
+      ) : transacoes.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          {temFiltro
+            ? 'Nenhuma transação encontrada para esses filtros.'
+            : 'Nenhuma transação cadastrada ainda.'}
+        </p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
@@ -181,6 +337,31 @@ export function Transacoes() {
               ))}
             </tbody>
           </table>
+
+          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+            <p className="text-sm text-slate-500">
+              {primeiroDaPagina}–{ultimoDaPagina} de {totalItens}
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setPagina(pagina - 1)}
+                disabled={pagina === 0}
+                className="rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-slate-500">
+                {pagina + 1} de {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina(pagina + 1)}
+                disabled={pagina + 1 >= totalPaginas}
+                className="rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
