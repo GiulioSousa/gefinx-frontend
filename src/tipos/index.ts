@@ -46,3 +46,26 @@ export interface ErroApi {
   mensagem: string
   erros: Record<string, string>
 }
+
+/** O envelope de uma listagem paginada, como a API o devolve. */
+export interface Pagina<T> {
+  itens: T[]
+  pagina: number
+  tamanho: number
+  totalItens: number
+  totalPaginas: number
+}
+
+/**
+ * Os recortes da listagem de transações. Todo campo é opcional, e ausente significa
+ * "não filtra por isso"; os preenchidos se somam.
+ *
+ * As datas são inclusivas nas duas pontas, no formato ISO que a API espera.
+ */
+export interface FiltroTransacoes {
+  dataInicio?: string
+  dataFim?: string
+  tipo?: TipoTransacao
+  contaId?: number
+  categoriaId?: number
+}

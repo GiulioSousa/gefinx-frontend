@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { Saldo, TipoTransacao, Transacao } from '../tipos'
+import type { FiltroTransacoes, Pagina, Saldo, TipoTransacao, Transacao } from '../tipos'
 
 /**
  * `categoriaId` e `contaDestinoId` são mutuamente exclusivos, conforme o tipo:
@@ -15,8 +15,31 @@ export interface DadosTransacao {
   dataTransacao: string
 }
 
-export async function listarTransacoes(): Promise<Transacao[]> {
-  const { data } = await clienteApi.get<Transacao[]>('/transacoes')
+/**
+ * A listagem, paginada. `pagina` conta a partir de zero, como a API.
+ *
+ * Campo vazio do filtro é omitido da URL em vez de ir como string vazia: a API distingue
+ * "sem filtro" de "filtro vazio", e `?tipo=` seria um valor inválido para o enum — recusado
+ * com 400 quando a intenção era não filtrar nada.
+ */
+export async function listarTransacoes(
+  pagina = 0,
+  tamanho = 20,
+  filtro: FiltroTransacoes = {},
+  signal?: AbortSignal,
+): Promise<Pagina<Transacao>> {
+  const parametros: Record<string, string | number> = { pagina, tamanho }
+
+  for (const [chave, valor] of Object.entries(filtro)) {
+    if (valor !== undefined && valor !== '') {
+      parametros[chave] = valor
+    }
+  }
+
+  const { data } = await clienteApi.get<Pagina<Transacao>>('/transacoes', {
+    params: parametros,
+    signal,
+  })
   return data
 }
 

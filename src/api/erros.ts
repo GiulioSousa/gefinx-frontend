@@ -1,5 +1,16 @@
-import { isAxiosError } from 'axios'
+import { isAxiosError, isCancel } from 'axios'
 import type { ErroApi } from '../tipos'
+
+/**
+ * Se a requisição foi cancelada por quem a fez, e não recusada pelo servidor.
+ *
+ * Requisição cancelada não é falha: é o resultado esperado de o usuário ter pedido outra
+ * coisa antes de esta chegar. Tratá-la como erro poria um aviso vermelho na tela a cada
+ * troca rápida de filtro.
+ */
+export function foiCancelada(erro: unknown): boolean {
+  return isCancel(erro)
+}
 
 export function extrairMensagemErro(erro: unknown, mensagemPadrao = 'Ocorreu um erro inesperado'): string {
   if (isAxiosError<ErroApi>(erro) && erro.response?.data?.mensagem) {
