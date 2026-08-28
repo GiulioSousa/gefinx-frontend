@@ -65,6 +65,9 @@ export function Transacoes() {
       }
       setMostrarFormulario(false)
       setTransacaoEmEdicao(undefined)
+      // O aviso descrevia uma falha anterior que o salvamento acabou de tornar passado.
+      // Deixá-lo na tela faz a interface afirmar algo que já não é verdade.
+      setErro('')
       await carregarDados()
     } catch (excecao) {
       // Ver Categorias.tsx: a conversão para Error descartava o mapa por campo.
@@ -78,6 +81,7 @@ export function Transacoes() {
     }
     try {
       await transacoesApi.excluirTransacao(id)
+      setErro('')
       await carregarDados()
     } catch (excecao) {
       setErro(extrairMensagemErro(excecao, 'Não foi possível excluir a transação'))

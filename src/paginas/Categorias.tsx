@@ -45,6 +45,9 @@ export function Categorias() {
       }
       setMostrarFormulario(false)
       setCategoriaEmEdicao(undefined)
+      // O aviso descrevia uma falha anterior que o salvamento acabou de tornar passado.
+      // Deixá-lo na tela faz a interface afirmar algo que já não é verdade.
+      setErro('')
       await carregarDados()
     } catch (excecao) {
       // Repassa o erro inteiro, e não só a mensagem: o formulário precisa do mapa por
@@ -59,6 +62,7 @@ export function Categorias() {
     }
     try {
       await categoriasApi.excluirCategoria(id)
+      setErro('')
       await carregarDados()
     } catch (excecao) {
       setErro(extrairMensagemErro(excecao, 'Não foi possível excluir a categoria'))
