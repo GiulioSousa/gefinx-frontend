@@ -22,13 +22,16 @@ export function Painel() {
   useEffect(() => {
     async function carregar() {
       try {
+        // Cinco linhas pedidas ao servidor, e não o histórico inteiro baixado para
+        // descartar tudo menos as cinco primeiras — que era o custo mais caro da tela,
+        // crescendo a cada lançamento novo.
         const [saldoObtido, transacoes, contasObtidas] = await Promise.all([
           buscarSaldo(),
-          listarTransacoes(),
+          listarTransacoes(0, 5),
           listarContas(),
         ])
         setSaldo(saldoObtido)
-        setTransacoesRecentes(transacoes.slice(0, 5))
+        setTransacoesRecentes(transacoes.itens)
         setContas(contasObtidas)
       } catch (excecao) {
         setErro(extrairMensagemErro(excecao, 'Não foi possível carregar o painel'))
