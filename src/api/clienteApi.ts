@@ -1,7 +1,20 @@
 import axios, { isAxiosError } from 'axios'
 
+/**
+ * O padrão é **relativo** de propósito.
+ *
+ * Em produção o proxy serve o frontend e a API sob o mesmo domínio, então `/api` resolve
+ * sozinho — sem variável de ambiente, e sem CORS, porque requisição de mesma origem não
+ * passa por ele. Em desenvolvimento, onde Vite e backend ocupam portas diferentes,
+ * `VITE_API_URL` no `.env.local` aponta para a porta do backend.
+ *
+ * Antes o endereço era `http://localhost:8080/api` escrito aqui: um `localhost` compilado
+ * dentro do bundle não tem como estar certo em nenhum outro lugar.
+ */
+const urlDaApi = import.meta.env.VITE_API_URL ?? '/api'
+
 export const clienteApi = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: urlDaApi,
 })
 
 clienteApi.interceptors.request.use((config) => {
