@@ -27,11 +27,15 @@ E o back-end no ar em `http://localhost:8080` — sem ele, só as telas pública
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-A aplicação sobe em `http://localhost:5173`, que é a **única origem** liberada no CORS do
-back-end. Servir de outra porta exige alterar a configuração de lá.
+A aplicação sobe em `http://localhost:5173`, que é a origem liberada por padrão no CORS do
+back-end — configurável lá por `CORS_ORIGENS`, sem recompilar.
+
+O `.env.local` é necessário em desenvolvimento: sem ele o cliente usa `/api`, relativo, que só
+resolve quando alguém serve frontend e API no mesmo domínio. Aqui são duas portas diferentes.
 
 | Script | O que faz |
 |---|---|
@@ -41,8 +45,19 @@ back-end. Servir de outra porta exige alterar a configuração de lá.
 | `npm run lint` | Oxlint |
 | `npm run auditoria` | `npm audit --audit-level=high` |
 
-> A URL da API está fixa em `src/api/clienteApi.ts`. Movê-la para uma variável de ambiente
-> (`VITE_API_URL`) é item conhecido e ainda pendente.
+### Build de produção
+
+O endereço da API vem de `VITE_API_URL`, e o padrão é **`/api`, relativo** — o que funciona sem
+variável nenhuma quando o proxy serve o `dist/` e a API sob o mesmo domínio.
+
+> **Rode o build no servidor.** O Vite carrega `.env.local` também no `npm run build` e embute o
+> valor no bundle: buildar nesta máquina e enviar o `dist/` publica um frontend que tenta falar com
+> `http://localhost:8080` — o localhost de **quem visita**, e a falha não aparece em log nenhum do
+> servidor. Se precisar buildar fora, remova o `.env.local` antes e confira com
+> `grep -r "localhost:8080" dist/`.
+
+As rotas são do React Router, então o servidor precisa devolver o `index.html` para qualquer
+caminho (`try_files $uri $uri/ /index.html` no nginx). Sem isso, recarregar `/transacoes` dá 404.
 
 ---
 
@@ -159,7 +174,5 @@ os nomes que vêm das bibliotecas (`useState`, `NavLink`) e os scripts padrão d
 
 ## Limitações conhecidas
 
-- **URL da API fixa** em `clienteApi.ts`, sem `VITE_API_URL`.
-- **Sem testes automatizados.** O back-end tem 89; aqui, nenhum.
-- **Sem paginação** na lista de transações — degrada conforme o histórico cresce.
+- **Sem testes automatizados.** O back-end tem 148; aqui, nenhum.
 - **Sem refresh token**: a sessão dura 24h e acaba, sem renovação silenciosa.
