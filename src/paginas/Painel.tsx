@@ -44,49 +44,60 @@ export function Painel() {
   }, [])
 
   if (carregando) {
-    return <p className="text-slate-500">Carregando...</p>
+    return <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
   }
 
   if (erro) {
-    return <p className="text-red-600">{erro}</p>
+    return <p className="text-red-600 dark:text-red-400">{erro}</p>
   }
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Receitas</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">{formatarMoeda(saldo?.totalReceitas ?? 0)}</p>
+      {/*
+        Dois cartões por linha no celular, em vez de um empilhado sob o outro. O saldo ocupa a
+        linha inteira: com três cartões em duas colunas, a alternativa era deixar meia linha
+        vazia justamente ao lado do número que resume a tela.
+
+        Abaixo de `sm` o valor cai para `text-lg` e o cartão para `p-3`, e isso não é estética.
+        O formato pt-BR põe um espaço não-quebrável depois de "R$", então o valor é uma palavra
+        só, que não quebra: em `text-2xl` numa coluna de meia tela ele vazava para fora do
+        cartão em vez de se ajustar. Com o tamanho reduzido, os 112px úteis de um aparelho de
+        320px comportam até "R$ 128.450,90"; num de 375px sobra folga para a casa dos milhões.
+      */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Receitas</p>
+          <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400 sm:text-2xl">{formatarMoeda(saldo?.totalReceitas ?? 0)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Despesas</p>
-          <p className="mt-1 text-2xl font-semibold text-red-600">{formatarMoeda(saldo?.totalDespesas ?? 0)}</p>
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Despesas</p>
+          <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-400 sm:text-2xl">{formatarMoeda(saldo?.totalDespesas ?? 0)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Saldo</p>
-          <p className={`mt-1 text-2xl font-semibold ${(saldo?.saldo ?? 0) >= 0 ? 'text-slate-900' : 'text-red-600'}`}>
+        <div className="col-span-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:col-span-1 sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Saldo</p>
+          <p className={`mt-1 text-lg font-semibold sm:text-2xl ${(saldo?.saldo ?? 0) >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
             {formatarMoeda(saldo?.saldo ?? 0)}
           </p>
         </div>
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-slate-900">Saldo por conta</h2>
+        <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Saldo por conta</h2>
         {contas.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhuma conta cadastrada.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma conta cadastrada.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             {/* Duas colunas cabem com folga de 2px numa tela de 375px — folga que um nome
                 de conta mais longo consome. Com `overflow-hidden` o excesso era cortado em
                 silêncio; rolando, no pior caso o usuário arrasta. */}
             <table className="w-full text-left text-sm">
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {contas.map((conta) => (
                   <tr key={conta.id}>
-                    <td className="px-4 py-2 text-slate-900">{conta.nome}</td>
+                    <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{conta.nome}</td>
                     <td
                       className={`px-4 py-2 text-right font-medium ${
-                        conta.saldo >= 0 ? 'text-slate-900' : 'text-red-600'
+                        conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
                       }`}
                     >
                       {formatarMoeda(conta.saldo)}
@@ -100,19 +111,19 @@ export function Painel() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-slate-900">Últimas transações</h2>
+        <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Últimas transações</h2>
         {transacoesRecentes.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhuma transação cadastrada ainda.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma transação cadastrada ainda.</p>
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             {/* Ver Transacoes.tsx: abaixo de `sm` a tabela era cortada sem possibilidade
                 de rolar, e o valor — o dado que se vem ao painel para ver — sumia. */}
-            <ul className="divide-y divide-slate-100 sm:hidden">
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800 sm:hidden">
               {transacoesRecentes.map((transacao) => (
                 <li key={transacao.id} className="flex items-start justify-between gap-3 p-4">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-900">{transacao.descricao}</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="truncate font-medium text-slate-900 dark:text-slate-100">{transacao.descricao}</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {transacao.nomeCategoria ??
                         (transacao.nomeContaDestino
                           ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
@@ -130,7 +141,7 @@ export function Painel() {
             </ul>
 
             <table className="hidden w-full text-left text-sm sm:table">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="rounded-tl-lg px-4 py-2 font-medium">Descrição</th>
                   <th className="px-4 py-2 font-medium">Categoria</th>
@@ -138,17 +149,17 @@ export function Painel() {
                   <th className="rounded-tr-lg px-4 py-2 text-right font-medium">Valor</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {transacoesRecentes.map((transacao) => (
                   <tr key={transacao.id}>
-                    <td className="px-4 py-2 text-slate-900">{transacao.descricao}</td>
-                    <td className="px-4 py-2 text-slate-500">
+                    <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{transacao.descricao}</td>
+                    <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
                       {transacao.nomeCategoria ??
                         (transacao.nomeContaDestino
                           ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
                           : '—')}
                     </td>
-                    <td className="px-4 py-2 text-slate-500">{formatarData(transacao.dataTransacao)}</td>
+                    <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{formatarData(transacao.dataTransacao)}</td>
                     <td className="px-4 py-2 text-right">
                       <ValorDaTransacao tipo={transacao.tipo} valor={transacao.valor} />
                     </td>
