@@ -5,16 +5,13 @@ import { listarContas } from '../api/contasApi'
 import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
+import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
 import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
 
 /** O mesmo padrão da API. Cabe numa tela sem rolagem longa e sobra folga até o teto de 100. */
 const TAMANHO_DA_PAGINA = 20
 
 const ENTRADA = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
-
-function formatarMoeda(valor: number): string {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
 
 function formatarData(data: string): string {
   return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR')
@@ -280,16 +277,63 @@ export function Transacoes() {
             : 'Nenhuma transação cadastrada ainda.'}
         </p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
+        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+          {/*
+            Cartões abaixo de `sm`, tabela a partir dali. Não é preferência estética: a
+            tabela pede 606px e um celular de 375px oferece 343, então Data, Valor e Ações
+            ficavam fora da área visível — e o `overflow-hidden` que arredondava os cantos
+            impedia rolar até elas. O valor do lançamento, que é o dado principal aqui,
+            simplesmente não aparecia, e não havia como editar nem excluir pelo celular.
+          */}
+          <ul className="divide-y divide-slate-100 sm:hidden">
+            {transacoes.map((transacao) => (
+              <li key={transacao.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium text-slate-900">{transacao.descricao}</p>
+                  <ValorDaTransacao
+                    tipo={transacao.tipo}
+                    valor={transacao.valor}
+                    className="shrink-0 text-right"
+                  />
+                </div>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  {transacao.nomeCategoria ?? '—'} ·{' '}
+                  {transacao.nomeContaDestino
+                    ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
+                    : transacao.nomeConta}
+                </p>
+
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm text-slate-500">{formatarData(transacao.dataTransacao)}</span>
+                  <span>
+                    <button
+                      onClick={() => abrirEdicao(transacao)}
+                      className="mr-4 text-sm font-medium text-emerald-600 hover:underline"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => excluir(transacao.id)}
+                      className="text-sm font-medium text-red-600 hover:underline"
+                    >
+                      Excluir
+                    </button>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <table className="hidden w-full text-left text-sm sm:table">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-4 py-2 font-medium">Descrição</th>
+                <th className="rounded-tl-lg px-4 py-2 font-medium">Descrição</th>
                 <th className="px-4 py-2 font-medium">Categoria</th>
                 <th className="px-4 py-2 font-medium">Conta</th>
                 <th className="px-4 py-2 font-medium">Data</th>
                 <th className="px-4 py-2 text-right font-medium">Valor</th>
-                <th className="px-4 py-2 text-right font-medium">Ações</th>
+                <th className="rounded-tr-lg px-4 py-2 text-right font-medium">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -303,21 +347,8 @@ export function Transacoes() {
                       : transacao.nomeConta}
                   </td>
                   <td className="px-4 py-2 text-slate-500">{formatarData(transacao.dataTransacao)}</td>
-                  {/*
-                    Transferência fica em cinza e sem sinal: verde ou vermelho diriam que o
-                    patrimônio subiu ou desceu, e ele não mudou — o dinheiro só trocou de conta.
-                  */}
-                  <td
-                    className={`px-4 py-2 text-right font-medium ${
-                      transacao.tipo === 'TRANSFERENCIA'
-                        ? 'text-slate-600'
-                        : transacao.tipo === 'RECEITA'
-                          ? 'text-emerald-600'
-                          : 'text-red-600'
-                    }`}
-                  >
-                    {transacao.tipo === 'TRANSFERENCIA' ? '' : transacao.tipo === 'RECEITA' ? '+ ' : '- '}
-                    {formatarMoeda(transacao.valor)}
+                  <td className="px-4 py-2 text-right">
+                    <ValorDaTransacao tipo={transacao.tipo} valor={transacao.valor} />
                   </td>
                   <td className="px-4 py-2 text-right">
                     <button

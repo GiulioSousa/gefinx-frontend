@@ -3,6 +3,7 @@ import { buscarSaldo, listarTransacoes } from '../api/transacoesApi'
 import { listarContas } from '../api/contasApi'
 import type { Conta, Saldo, Transacao } from '../tipos'
 import { extrairMensagemErro } from '../api/erros'
+import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -74,7 +75,10 @@ export function Painel() {
         {contas.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhuma conta cadastrada.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+            {/* Duas colunas cabem com folga de 2px numa tela de 375px — folga que um nome
+                de conta mais longo consome. Com `overflow-hidden` o excesso era cortado em
+                silêncio; rolando, no pior caso o usuário arrasta. */}
             <table className="w-full text-left text-sm">
               <tbody className="divide-y divide-slate-100">
                 {contas.map((conta) => (
@@ -100,14 +104,38 @@ export function Painel() {
         {transacoesRecentes.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhuma transação cadastrada ainda.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            {/* Ver Transacoes.tsx: abaixo de `sm` a tabela era cortada sem possibilidade
+                de rolar, e o valor — o dado que se vem ao painel para ver — sumia. */}
+            <ul className="divide-y divide-slate-100 sm:hidden">
+              {transacoesRecentes.map((transacao) => (
+                <li key={transacao.id} className="flex items-start justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-900">{transacao.descricao}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {transacao.nomeCategoria ??
+                        (transacao.nomeContaDestino
+                          ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
+                          : '—')}{' '}
+                      · {formatarData(transacao.dataTransacao)}
+                    </p>
+                  </div>
+                  <ValorDaTransacao
+                    tipo={transacao.tipo}
+                    valor={transacao.valor}
+                    className="shrink-0"
+                  />
+                </li>
+              ))}
+            </ul>
+
+            <table className="hidden w-full text-left text-sm sm:table">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 font-medium">Descrição</th>
+                  <th className="rounded-tl-lg px-4 py-2 font-medium">Descrição</th>
                   <th className="px-4 py-2 font-medium">Categoria</th>
                   <th className="px-4 py-2 font-medium">Data</th>
-                  <th className="px-4 py-2 text-right font-medium">Valor</th>
+                  <th className="rounded-tr-lg px-4 py-2 text-right font-medium">Valor</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -121,18 +149,8 @@ export function Painel() {
                           : '—')}
                     </td>
                     <td className="px-4 py-2 text-slate-500">{formatarData(transacao.dataTransacao)}</td>
-                    {/* Ver Transacoes.tsx: transferência não sobe nem desce patrimônio. */}
-                    <td
-                      className={`px-4 py-2 text-right font-medium ${
-                        transacao.tipo === 'TRANSFERENCIA'
-                          ? 'text-slate-600'
-                          : transacao.tipo === 'RECEITA'
-                            ? 'text-emerald-600'
-                            : 'text-red-600'
-                      }`}
-                    >
-                      {transacao.tipo === 'TRANSFERENCIA' ? '' : transacao.tipo === 'RECEITA' ? '+ ' : '- '}
-                      {formatarMoeda(transacao.valor)}
+                    <td className="px-4 py-2 text-right">
+                      <ValorDaTransacao tipo={transacao.tipo} valor={transacao.valor} />
                     </td>
                   </tr>
                 ))}
