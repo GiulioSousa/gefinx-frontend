@@ -110,7 +110,7 @@ export function Contas() {
       {contas.length === 0 ? (
         <p className="text-sm text-slate-500">Nenhuma conta cadastrada.</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
