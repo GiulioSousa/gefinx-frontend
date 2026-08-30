@@ -11,7 +11,7 @@ import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erro
 /** O mesmo padrão da API. Cabe numa tela sem rolagem longa e sobra folga até o teto de 100. */
 const TAMANHO_DA_PAGINA = 20
 
-const ENTRADA = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
+const ENTRADA = 'w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100'
 
 function formatarData(data: string): string {
   return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR')
@@ -161,7 +161,7 @@ export function Transacoes() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Transações</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Transações</h1>
         {!mostrarFormulario && (
           <button
             onClick={abrirNovoFormulario}
@@ -172,7 +172,7 @@ export function Transacoes() {
         )}
       </div>
 
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
       {mostrarFormulario && (
         <FormularioTransacao
@@ -187,9 +187,9 @@ export function Transacoes() {
         />
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-600 dark:text-slate-300">
             De
             <input
               type="date"
@@ -198,7 +198,7 @@ export function Transacoes() {
               className={ENTRADA}
             />
           </label>
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-600 dark:text-slate-300">
             Até
             <input
               type="date"
@@ -207,7 +207,7 @@ export function Transacoes() {
               className={ENTRADA}
             />
           </label>
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-600 dark:text-slate-300">
             Tipo
             <select
               value={filtro.tipo ?? ''}
@@ -222,7 +222,7 @@ export function Transacoes() {
               <option value="TRANSFERENCIA">Transferência</option>
             </select>
           </label>
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-600 dark:text-slate-300">
             Conta
             <select
               value={filtro.contaId ?? ''}
@@ -239,7 +239,7 @@ export function Transacoes() {
               ))}
             </select>
           </label>
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-600 dark:text-slate-300">
             Categoria
             <select
               value={filtro.categoriaId ?? ''}
@@ -261,7 +261,7 @@ export function Transacoes() {
         {temFiltro && (
           <button
             onClick={limparFiltros}
-            className="mt-3 text-sm font-medium text-emerald-600 hover:underline"
+            className="mt-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
           >
             Limpar filtros
           </button>
@@ -269,15 +269,15 @@ export function Transacoes() {
       </div>
 
       {carregando ? (
-        <p className="text-slate-500">Carregando...</p>
+        <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
       ) : transacoes.length === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {temFiltro
             ? 'Nenhuma transação encontrada para esses filtros.'
             : 'Nenhuma transação cadastrada ainda.'}
         </p>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
           {/*
             Cartões abaixo de `sm`, tabela a partir dali. Não é preferência estética: a
             tabela pede 606px e um celular de 375px oferece 343, então Data, Valor e Ações
@@ -285,11 +285,11 @@ export function Transacoes() {
             impedia rolar até elas. O valor do lançamento, que é o dado principal aqui,
             simplesmente não aparecia, e não havia como editar nem excluir pelo celular.
           */}
-          <ul className="divide-y divide-slate-100 sm:hidden">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800 sm:hidden">
             {transacoes.map((transacao) => (
               <li key={transacao.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="font-medium text-slate-900">{transacao.descricao}</p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">{transacao.descricao}</p>
                   <ValorDaTransacao
                     tipo={transacao.tipo}
                     valor={transacao.valor}
@@ -297,7 +297,7 @@ export function Transacoes() {
                   />
                 </div>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {transacao.nomeCategoria ?? '—'} ·{' '}
                   {transacao.nomeContaDestino
                     ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
@@ -305,17 +305,17 @@ export function Transacoes() {
                 </p>
 
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm text-slate-500">{formatarData(transacao.dataTransacao)}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{formatarData(transacao.dataTransacao)}</span>
                   <span>
                     <button
                       onClick={() => abrirEdicao(transacao)}
-                      className="mr-4 text-sm font-medium text-emerald-600 hover:underline"
+                      className="mr-4 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => excluir(transacao.id)}
-                      className="text-sm font-medium text-red-600 hover:underline"
+                      className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
                     >
                       Excluir
                     </button>
@@ -326,7 +326,7 @@ export function Transacoes() {
           </ul>
 
           <table className="hidden w-full text-left text-sm sm:table">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="rounded-tl-lg px-4 py-2 font-medium">Descrição</th>
                 <th className="px-4 py-2 font-medium">Categoria</th>
@@ -336,30 +336,30 @@ export function Transacoes() {
                 <th className="rounded-tr-lg px-4 py-2 text-right font-medium">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {transacoes.map((transacao) => (
                 <tr key={transacao.id}>
-                  <td className="px-4 py-2 text-slate-900">{transacao.descricao}</td>
-                  <td className="px-4 py-2 text-slate-500">{transacao.nomeCategoria ?? '—'}</td>
-                  <td className="px-4 py-2 text-slate-500">
+                  <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{transacao.descricao}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{transacao.nomeCategoria ?? '—'}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
                     {transacao.nomeContaDestino
                       ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
                       : transacao.nomeConta}
                   </td>
-                  <td className="px-4 py-2 text-slate-500">{formatarData(transacao.dataTransacao)}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{formatarData(transacao.dataTransacao)}</td>
                   <td className="px-4 py-2 text-right">
                     <ValorDaTransacao tipo={transacao.tipo} valor={transacao.valor} />
                   </td>
                   <td className="px-4 py-2 text-right">
                     <button
                       onClick={() => abrirEdicao(transacao)}
-                      className="mr-3 text-sm font-medium text-emerald-600 hover:underline"
+                      className="mr-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => excluir(transacao.id)}
-                      className="text-sm font-medium text-red-600 hover:underline"
+                      className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
                     >
                       Excluir
                     </button>
@@ -369,25 +369,25 @@ export function Transacoes() {
             </tbody>
           </table>
 
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-            <p className="text-sm text-slate-500">
+          <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 px-4 py-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {primeiroDaPagina}–{ultimoDaPagina} de {totalItens}
             </p>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setPagina(pagina - 1)}
                 disabled={pagina === 0}
-                className="rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Anterior
               </button>
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 {pagina + 1} de {totalPaginas}
               </span>
               <button
                 onClick={() => setPagina(pagina + 1)}
                 disabled={pagina + 1 >= totalPaginas}
-                className="rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Próxima
               </button>

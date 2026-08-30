@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/*
+  O tema escuro responde a uma classe no <html>, e não à media query que o Tailwind usa por
+  padrão: a preferência do sistema é só o ponto de partida, e o botão do cabeçalho permite
+  discordar dela. Quem escreve a classe é o ContextoTema — e, no primeiro quadro, o script
+  do index.html.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Diz ao navegador em qual esquema desenhar o que não é nosso: a barra de rolagem, a lista
+  que o <select> abre e o calendário do <input type="date">, que continuariam brancos por
+  dentro de uma tela escura porque nenhuma classe alcança esses controles.
+*/
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}

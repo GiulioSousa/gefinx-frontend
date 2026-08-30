@@ -25,10 +25,10 @@ export function ValorDaTransacao({
 }) {
   const cor =
     tipo === 'TRANSFERENCIA'
-      ? 'text-slate-600'
+      ? 'text-slate-600 dark:text-slate-300'
       : tipo === 'RECEITA'
-        ? 'text-emerald-600'
-        : 'text-red-600'
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-red-600 dark:text-red-400'
 
   const sinal = tipo === 'TRANSFERENCIA' ? '' : tipo === 'RECEITA' ? '+ ' : '- '
 

@@ -70,7 +70,7 @@ export function Categorias() {
   }
 
   if (carregando) {
-    return <p className="text-slate-500">Carregando...</p>
+    return <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
   }
 
   const receitas = categorias.filter((categoria) => categoria.tipo === 'RECEITA')
@@ -79,7 +79,7 @@ export function Categorias() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Categorias</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Categorias</h1>
         {!mostrarFormulario && (
           <button
             onClick={abrirNovoFormulario}
@@ -90,7 +90,7 @@ export function Categorias() {
         )}
       </div>
 
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
       {mostrarFormulario && (
         <FormularioCategoria
@@ -120,22 +120,22 @@ interface ListaCategoriasProps {
 
 function ListaCategorias({ titulo, categorias, aoEditar, aoExcluir }: ListaCategoriasProps) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <h2 className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">{titulo}</h2>
+    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+      <h2 className="border-b border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300">{titulo}</h2>
       {categorias.length === 0 ? (
-        <p className="px-4 py-3 text-sm text-slate-500">Nenhuma categoria cadastrada.</p>
+        <p className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">Nenhuma categoria cadastrada.</p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {categorias.map((categoria) => (
             <li key={categoria.id} className="flex items-center justify-between px-4 py-2.5">
-              <span className="text-sm text-slate-900">{categoria.nome}</span>
+              <span className="text-sm text-slate-900 dark:text-slate-100">{categoria.nome}</span>
               <span className="flex gap-3">
-                <button onClick={() => aoEditar(categoria)} className="text-sm font-medium text-emerald-600 hover:underline">
+                <button onClick={() => aoEditar(categoria)} className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
                   Editar
                 </button>
                 <button
                   onClick={() => aoExcluir(categoria.id)}
-                  className="text-sm font-medium text-red-600 hover:underline"
+                  className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
                 >
                   Excluir
                 </button>

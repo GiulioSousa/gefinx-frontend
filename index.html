@@ -5,6 +5,26 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeFinX</title>
+    <script>
+      /*
+        Roda antes da primeira pintura, e por isso mora aqui em vez de num efeito do React:
+        aplicar a classe só depois que o app monta faria a tela piscar branca a cada
+        carregamento para quem usa o tema escuro. Repete a regra do ContextoTema — a
+        preferência gravada manda, e o sistema decide enquanto não houver uma.
+      */
+      ;(function () {
+        try {
+          var salvo = localStorage.getItem('tema')
+          var escuro = salvo
+            ? salvo === 'escuro'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+          document.documentElement.classList.toggle('dark', escuro)
+        } catch (excecao) {
+          // localStorage bloqueado (aba anônima, cookies desativados). O tema claro é um
+          // padrão válido, e a tela não pode deixar de carregar por causa disto.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from '../componentes/ErroDeCampo'
+import { BotaoDeTema } from '../componentes/BotaoDeTema'
 
 export function Registro() {
   const { registrar } = useAutenticacao()
@@ -36,48 +37,52 @@ export function Registro() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">Criar conta</h1>
-        <p className="mb-6 text-sm text-slate-500">GeFinX · Gerenciador financeiro pessoal</p>
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
+      {/* Fora do Layout não há cabeçalho onde encaixar o botão, e trocar o tema só
+          depois de entrar deixaria a primeira tela do app fora do controle do usuário. */}
+      <BotaoDeTema className="absolute right-4 top-4" />
+
+      <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Criar conta</h1>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">GeFinX · Gerenciador financeiro pessoal</p>
 
         <form onSubmit={aoSubmeter} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nome</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nome</label>
             <input
               value={nome}
               onChange={(evento) => setNome(evento.target.value)}
               required
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
             <ErroDeCampo mensagem={errosPorCampo.nome} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">E-mail</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">E-mail</label>
             <input
               type="email"
               value={email}
               onChange={(evento) => setEmail(evento.target.value)}
               required
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
             <ErroDeCampo mensagem={errosPorCampo.email} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Senha</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Senha</label>
             <input
               type="password"
               value={senha}
               onChange={(evento) => setSenha(evento.target.value)}
               required
               minLength={10}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
             <ErroDeCampo mensagem={errosPorCampo.senha} />
-            <p className="mt-1 text-xs text-slate-500">No mínimo 10 caracteres.</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">No mínimo 10 caracteres.</p>
           </div>
 
-          {erro && !temErroDeCampo && <p className="text-sm text-red-600">{erro}</p>}
+          {erro && !temErroDeCampo && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
           <button
             type="submit"
@@ -88,9 +93,9 @@ export function Registro() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
           Já tem conta?{' '}
-          <Link to="/login" className="font-medium text-emerald-600 hover:underline">
+          <Link to="/login" className="font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
             Entrar
           </Link>
         </p>

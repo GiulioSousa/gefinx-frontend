@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from '../componentes/ErroDeCampo'
+import { BotaoDeTema } from '../componentes/BotaoDeTema'
 
 export function Login() {
   const { entrar, sessaoExpirada } = useAutenticacao()
@@ -33,15 +34,19 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">Entrar</h1>
-        <p className="mb-6 text-sm text-slate-500">GeFinX · Gerenciador financeiro pessoal</p>
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
+      {/* Fora do Layout não há cabeçalho onde encaixar o botão, e trocar o tema só
+          depois de entrar deixaria a primeira tela do app fora do controle do usuário. */}
+      <BotaoDeTema className="absolute right-4 top-4" />
+
+      <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Entrar</h1>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">GeFinX · Gerenciador financeiro pessoal</p>
 
         {sessaoExpirada && !erro && (
           <p
             role="status"
-            className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+            className="mb-4 rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-sm text-amber-800 dark:text-amber-200"
           >
             Sua sessão expirou. Entre novamente para continuar.
           </p>
@@ -49,29 +54,29 @@ export function Login() {
 
         <form onSubmit={aoSubmeter} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">E-mail</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">E-mail</label>
             <input
               type="email"
               value={email}
               onChange={(evento) => setEmail(evento.target.value)}
               required
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
             <ErroDeCampo mensagem={errosPorCampo.email} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Senha</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Senha</label>
             <input
               type="password"
               value={senha}
               onChange={(evento) => setSenha(evento.target.value)}
               required
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
             <ErroDeCampo mensagem={errosPorCampo.senha} />
           </div>
 
-          {erro && !temErroDeCampo && <p className="text-sm text-red-600">{erro}</p>}
+          {erro && !temErroDeCampo && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
           <button
             type="submit"
@@ -82,9 +87,9 @@ export function Login() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
           Não tem conta?{' '}
-          <Link to="/registro" className="font-medium text-emerald-600 hover:underline">
+          <Link to="/registro" className="font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
             Cadastre-se
           </Link>
         </p>

@@ -75,7 +75,7 @@ export function Contas() {
   }
 
   if (carregando) {
-    return <p className="text-slate-500">Carregando...</p>
+    return <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
   }
 
   const total = contas.reduce((soma, conta) => soma + conta.saldo, 0)
@@ -83,7 +83,7 @@ export function Contas() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Contas</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Contas</h1>
         {!mostrarFormulario && (
           <button
             onClick={abrirNovoFormulario}
@@ -94,7 +94,7 @@ export function Contas() {
         )}
       </div>
 
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
       {mostrarFormulario && (
         <FormularioConta
@@ -108,24 +108,24 @@ export function Contas() {
       )}
 
       {contas.length === 0 ? (
-        <p className="text-sm text-slate-500">Nenhuma conta cadastrada.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma conta cadastrada.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">Conta</th>
                 <th className="px-4 py-2 text-right font-medium">Saldo</th>
                 <th className="px-4 py-2 text-right font-medium">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {contas.map((conta) => (
                 <tr key={conta.id}>
-                  <td className="px-4 py-2 text-slate-900">{conta.nome}</td>
+                  <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{conta.nome}</td>
                   <td
                     className={`px-4 py-2 text-right font-medium ${
-                      conta.saldo >= 0 ? 'text-slate-900' : 'text-red-600'
+                      conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
                     }`}
                   >
                     {formatarMoeda(conta.saldo)}
@@ -133,13 +133,13 @@ export function Contas() {
                   <td className="px-4 py-2 text-right">
                     <button
                       onClick={() => abrirEdicao(conta)}
-                      className="mr-3 text-sm font-medium text-emerald-600 hover:underline"
+                      className="mr-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
                     >
                       Renomear
                     </button>
                     <button
                       onClick={() => excluir(conta.id)}
-                      className="text-sm font-medium text-red-600 hover:underline"
+                      className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
                     >
                       Excluir
                     </button>
@@ -147,10 +147,10 @@ export function Contas() {
                 </tr>
               ))}
             </tbody>
-            <tfoot className="border-t border-slate-200 bg-slate-50">
+            <tfoot className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <td className="px-4 py-2 text-sm font-medium text-slate-700">Consolidado</td>
-                <td className={`px-4 py-2 text-right font-semibold ${total >= 0 ? 'text-slate-900' : 'text-red-600'}`}>
+                <td className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300">Consolidado</td>
+                <td className={`px-4 py-2 text-right font-semibold ${total >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
                   {formatarMoeda(total)}
                 </td>
                 <td />
