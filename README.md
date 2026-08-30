@@ -58,7 +58,32 @@ back-end. Servir de outra porta exige alterar a configuração de lá.
 | Rotas | react-router-dom 7.18 |
 | Lint | Oxlint |
 
-Estilização é 100% Tailwind — não há CSS próprio além do `index.css` que importa o framework.
+Estilização é 100% Tailwind. O `index.css` importa o framework e acrescenta só o que o tema
+escuro exige: o `@custom-variant` que prende o `dark:` a uma classe em vez da media query, e o
+`color-scheme` de cada tema.
+
+---
+
+## Tema claro e escuro
+
+O tema segue a preferência do sistema até o usuário discordar dela pelo botão do cabeçalho —
+presente também no login e no cadastro, que ficam fora do `Layout`. A partir da primeira troca,
+a escolha vai para `localStorage` sob a chave `tema` e passa a vencer o sistema; enquanto não
+houver escolha gravada, uma mudança do sistema no meio da sessão é acompanhada na hora.
+
+Quem decide é o `ContextoTema`, que escreve a classe `dark` no `<html>`. Duas peças menos
+óbvias sustentam isso:
+
+- **Um script síncrono no `index.html`** aplica a classe antes da primeira pintura. Fazer isso
+  num efeito do React deixaria a tela piscar branca a cada carregamento para quem usa o escuro —
+  o app monta depois do primeiro quadro. É a mesma regra do contexto, repetida de propósito, e
+  falha em silêncio se o `localStorage` estiver bloqueado.
+- **`color-scheme` no `index.css`**, acompanhando a classe. Sem ele, a barra de rolagem, a lista
+  aberta de um `<select>` e o calendário do `<input type="date">` continuam brancos por dentro
+  da tela escura: nenhuma classe do Tailwind alcança esses controles do navegador.
+
+Cada classe de cor tem uma irmã `dark:` no mesmo elemento — não há inversão automática. O
+mapeamento completo, com hex e contrastes medidos, está em PALETA.md.
 
 ---
 
@@ -68,8 +93,10 @@ Estilização é 100% Tailwind — não há CSS próprio além do `index.css` qu
 src/
 ├── api/          # clienteApi (axios + interceptors), autenticacaoApi, categoriasApi,
 │                 # transacoesApi, sessoesApi, erros
-├── contextos/    # ContextoAutenticacao — sessão em localStorage
-├── componentes/  # Layout, RotaProtegida, FormularioTransacao, FormularioCategoria, ErroDeCampo
+├── contextos/    # ContextoAutenticacao — sessão em localStorage;
+│                 # ContextoTema — claro/escuro, com o sistema como padrão
+├── componentes/  # Layout, RotaProtegida, BotaoDeTema, FormularioTransacao,
+│                 # FormularioCategoria, ErroDeCampo
 ├── paginas/      # Login, Registro, Painel, Transacoes, Categorias
 └── tipos/        # contratos compartilhados com a API
 ```
