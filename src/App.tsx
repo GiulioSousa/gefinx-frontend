@@ -4,7 +4,6 @@ import { ProvedorTema } from './contextos/ContextoTema'
 import { RotaProtegida } from './componentes/RotaProtegida'
 import { Layout } from './componentes/Layout'
 import { Login } from './paginas/Login'
-import { Registro } from './paginas/Registro'
 import { Painel } from './paginas/Painel'
 import { Transacoes } from './paginas/Transacoes'
 import { Categorias } from './paginas/Categorias'
@@ -17,7 +16,6 @@ function App() {
         <ProvedorAutenticacao>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
             <Route
               path="/"
               element={

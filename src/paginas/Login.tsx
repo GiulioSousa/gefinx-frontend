@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from '../componentes/ErroDeCampo'
@@ -8,7 +8,7 @@ import { BotaoDeTema } from '../componentes/BotaoDeTema'
 export function Login() {
   const { entrar, sessaoExpirada } = useAutenticacao()
   const navegar = useNavigate()
-  const [email, setEmail] = useState('')
+  const [usuario, setUsuario] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
@@ -22,7 +22,7 @@ export function Login() {
     setErrosPorCampo({})
     setEnviando(true)
     try {
-      await entrar(email, senha)
+      await entrar(usuario, senha)
       navegar('/')
     } catch (excecao) {
       const falha = ErroDeFormulario.de(excecao, 'Não foi possível entrar')
@@ -54,20 +54,32 @@ export function Login() {
 
         <form onSubmit={aoSubmeter} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">E-mail</label>
+            <label htmlFor="usuario" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Usuário
+            </label>
             <input
-              type="email"
-              value={email}
-              onChange={(evento) => setEmail(evento.target.value)}
+              id="usuario"
+              name="usuario"
+              // Sem o campo de e-mail, o navegador perde a pista que usava para oferecer a
+              // credencial salva; `autoComplete` devolve essa pista de forma explícita.
+              autoComplete="username"
+              autoFocus
+              value={usuario}
+              onChange={(evento) => setUsuario(evento.target.value)}
               required
               className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />
-            <ErroDeCampo mensagem={errosPorCampo.email} />
+            <ErroDeCampo mensagem={errosPorCampo.usuario} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Senha</label>
+            <label htmlFor="senha" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Senha
+            </label>
             <input
+              id="senha"
+              name="senha"
               type="password"
+              autoComplete="current-password"
               value={senha}
               onChange={(evento) => setSenha(evento.target.value)}
               required
@@ -86,13 +98,6 @@ export function Login() {
             {enviando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          Não tem conta?{' '}
-          <Link to="/registro" className="font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
-            Cadastre-se
-          </Link>
-        </p>
       </div>
     </div>
   )

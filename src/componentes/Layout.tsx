@@ -79,7 +79,7 @@ export function Layout({ children }: { children: ReactNode }) {
             */}
             <div className="flex items-center gap-3">
               <div className="hidden items-center gap-3 sm:flex">
-                <span className="text-sm text-slate-500 dark:text-slate-400">{usuario?.nome}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{usuario}</span>
                 <button
                   onClick={aoEncerrarTodas}
                   disabled={encerrando}
@@ -152,7 +152,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </nav>
 
               <div className="mt-3 flex flex-col gap-2 border-t border-slate-200 dark:border-slate-800 pt-3">
-                <span className="px-3 text-sm text-slate-500 dark:text-slate-400">{usuario?.nome}</span>
+                <span className="px-3 text-sm text-slate-500 dark:text-slate-400">{usuario}</span>
                 <button
                   onClick={aoEncerrarTodas}
                   disabled={encerrando}
