@@ -82,7 +82,7 @@ escuro exige: o `@custom-variant` que prende o `dark:` a uma classe em vez da me
 ## Tema claro e escuro
 
 O tema segue a preferência do sistema até o usuário discordar dela pelo botão do cabeçalho —
-presente também no login e no cadastro, que ficam fora do `Layout`. A partir da primeira troca,
+presente também no login, que fica fora do `Layout`. A partir da primeira troca,
 a escolha vai para `localStorage` sob a chave `tema` e passa a vencer o sistema; enquanto não
 houver escolha gravada, uma mudança do sistema no meio da sessão é acompanhada na hora.
 
@@ -112,7 +112,7 @@ src/
 │                 # ContextoTema — claro/escuro, com o sistema como padrão
 ├── componentes/  # Layout, RotaProtegida, BotaoDeTema, FormularioTransacao,
 │                 # FormularioCategoria, ErroDeCampo
-├── paginas/      # Login, Registro, Painel, Transacoes, Categorias
+├── paginas/      # Login, Painel, Transacoes, Contas, Categorias
 └── tipos/        # contratos compartilhados com a API
 ```
 
@@ -120,7 +120,7 @@ src/
 
 | Rota | Acesso |
 |---|---|
-| `/login`, `/registro` | pública |
+| `/login` | pública |
 | `/` (painel), `/transacoes`, `/categorias` | protegida por `RotaProtegida` |
 
 Qualquer caminho desconhecido redireciona para `/`.
@@ -129,8 +129,12 @@ Qualquer caminho desconhecido redireciona para `/`.
 
 ## Como a autenticação funciona
 
-O token JWT vem do back-end no login ou cadastro e é guardado em `localStorage`, junto com nome e
-e-mail. Dois interceptors do axios, em `src/api/clienteApi.ts`, cuidam do resto:
+Não há tela de cadastro: sem verificação de e-mail, ela deixava qualquer um que abrisse o
+endereço criar conta e usar o sistema. As contas nascem no banco, por quem opera — ver
+`db/criar-usuario.sql` no repositório do back-end. O login pede **usuário e senha**, e nada mais.
+
+O token JWT vem do back-end no login e é guardado em `localStorage`, junto com o nome de usuário.
+Dois interceptors do axios, em `src/api/clienteApi.ts`, cuidam do resto:
 
 - **Na requisição**: anexa `Authorization: Bearer <token>` quando há token guardado.
 - **Na resposta**: ao ver um `401`, encerra a sessão e manda o usuário ao login com um aviso.
