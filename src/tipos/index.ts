@@ -3,11 +3,6 @@ export type TipoTransacao = 'RECEITA' | 'DESPESA' | 'TRANSFERENCIA'
 /** Categoria nunca é TRANSFERENCIA: esse tipo pertence só à transação. */
 export type TipoCategoria = 'RECEITA' | 'DESPESA'
 
-export interface Usuario {
-  nome: string
-  email: string
-}
-
 export interface Categoria {
   id: number
   nome: string
