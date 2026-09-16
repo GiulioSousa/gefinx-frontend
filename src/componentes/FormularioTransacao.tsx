@@ -5,6 +5,12 @@ import { ErroDeFormulario } from '../api/erros'
 import { CampoDeValor } from './CampoDeValor'
 import { ErroDeCampo } from './ErroDeCampo'
 
+const TIPOS: { tipo: TipoTransacao; rotulo: string }[] = [
+  { tipo: 'DESPESA', rotulo: 'Despesa' },
+  { tipo: 'RECEITA', rotulo: 'Receita' },
+  { tipo: 'TRANSFERENCIA', rotulo: 'Transferência' },
+]
+
 interface FormularioTransacaoProps {
   categorias: Categoria[]
   contas: Conta[]
@@ -121,18 +127,30 @@ export function FormularioTransacao({
           <ErroDeCampo mensagem={errosPorCampo.descricao} />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</label>
-          <select
-            value={tipo}
-            onChange={(evento) => trocarTipo(evento.target.value as TipoTransacao)}
-            className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-          >
-            <option value="DESPESA">Despesa</option>
-            <option value="RECEITA">Receita</option>
-            <option value="TRANSFERENCIA">Transferência</option>
-          </select>
-        </div>
+        {/* Três opções à vista, e não escondidas numa lista: o tipo muda quais campos o
+            formulário pede, então é melhor que ele se escolha antes de preencher o resto. A
+            linha inteira, porque "Transferência" não cabe ao lado das outras em meia coluna. */}
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</legend>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {TIPOS.map((opcao) => (
+              <label
+                key={opcao.tipo}
+                className="flex items-center gap-2 py-1 text-sm text-slate-700 dark:text-slate-300"
+              >
+                <input
+                  type="radio"
+                  name="tipo"
+                  value={opcao.tipo}
+                  checked={tipo === opcao.tipo}
+                  onChange={() => trocarTipo(opcao.tipo)}
+                  className="h-4 w-4 accent-emerald-600 dark:accent-emerald-400"
+                />
+                {opcao.rotulo}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor</label>
