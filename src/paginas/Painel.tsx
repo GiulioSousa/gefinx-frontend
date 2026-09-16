@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
-import { buscarSaldo, listarTransacoes } from '../api/transacoesApi'
+import { buscarSaldo, criarTransacao, listarTransacoes } from '../api/transacoesApi'
+import type { DadosTransacao } from '../api/transacoesApi'
+import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
-import type { Conta, Saldo, Transacao } from '../tipos'
-import { extrairMensagemErro } from '../api/erros'
+import type { Categoria, Conta, Saldo, Transacao } from '../tipos'
+import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
+import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
+import { FormularioTransacao } from '../componentes/FormularioTransacao'
+import { Modal } from '../componentes/Modal'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
+import { VIDRO } from '../componentes/vidro'
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -17,8 +23,13 @@ export function Painel() {
   const [saldo, setSaldo] = useState<Saldo | null>(null)
   const [transacoesRecentes, setTransacoesRecentes] = useState<Transacao[]>([])
   const [contas, setContas] = useState<Conta[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  // Incrementar pede uma nova busca, porque o efeito de carga depende dele. É como o painel
+  // se atualiza depois de um lançamento sem piscar o "Carregando...".
+  const [recarga, setRecarga] = useState(0)
 
   useEffect(() => {
     async function carregar() {
@@ -26,14 +37,20 @@ export function Painel() {
         // Cinco linhas pedidas ao servidor, e não o histórico inteiro baixado para
         // descartar tudo menos as cinco primeiras — que era o custo mais caro da tela,
         // crescendo a cada lançamento novo.
-        const [saldoObtido, transacoes, contasObtidas] = await Promise.all([
+        //
+        // As categorias vêm junto só por causa do formulário de nova transação: são poucas
+        // linhas, e buscá-las no toque do botão faria o formulário abrir com atraso ou, se a
+        // busca falhasse, não abrir.
+        const [saldoObtido, transacoes, contasObtidas, categoriasObtidas] = await Promise.all([
           buscarSaldo(),
           listarTransacoes(0, 5),
           listarContas(),
+          listarCategorias(),
         ])
         setSaldo(saldoObtido)
         setTransacoesRecentes(transacoes.itens)
         setContas(contasObtidas)
+        setCategorias(categoriasObtidas)
       } catch (excecao) {
         setErro(extrairMensagemErro(excecao, 'Não foi possível carregar o painel'))
       } finally {
@@ -41,7 +58,20 @@ export function Painel() {
       }
     }
     carregar()
-  }, [])
+  }, [recarga])
+
+  async function salvar(dados: DadosTransacao) {
+    try {
+      await criarTransacao(dados)
+      setMostrarFormulario(false)
+      // Recarrega o painel inteiro, e não só a lista: o lançamento novo muda os totais, o
+      // saldo da conta e as últimas transações de uma vez.
+      setRecarga((atual) => atual + 1)
+    } catch (excecao) {
+      // Ver Categorias.tsx: a conversão para Error descartava o mapa por campo.
+      throw ErroDeFormulario.de(excecao, 'Não foi possível salvar a transação')
+    }
+  }
 
   if (carregando) {
     return <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
@@ -65,19 +95,19 @@ export function Painel() {
         320px comportam até "R$ 128.450,90"; num de 375px sobra folga para a casa dos milhões.
       */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Receitas</p>
-          <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400 sm:text-2xl">{formatarMoeda(saldo?.totalReceitas ?? 0)}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Despesas</p>
-          <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-400 sm:text-2xl">{formatarMoeda(saldo?.totalDespesas ?? 0)}</p>
-        </div>
-        <div className="col-span-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:col-span-1 sm:p-5">
+        <div className={`col-span-2 rounded-lg p-3 sm:col-span-1 sm:p-5 ${VIDRO}`}>
           <p className="text-sm text-slate-500 dark:text-slate-400">Saldo</p>
           <p className={`mt-1 text-lg font-semibold sm:text-2xl ${(saldo?.saldo ?? 0) >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
             {formatarMoeda(saldo?.saldo ?? 0)}
           </p>
+        </div>
+        <div className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Receitas</p>
+          <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400 sm:text-2xl">{formatarMoeda(saldo?.totalReceitas ?? 0)}</p>
+        </div>
+        <div className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Despesas</p>
+          <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-400 sm:text-2xl">{formatarMoeda(saldo?.totalDespesas ?? 0)}</p>
         </div>
       </div>
 
@@ -86,27 +116,23 @@ export function Painel() {
         {contas.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma conta cadastrada.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            {/* Duas colunas cabem com folga de 2px numa tela de 375px — folga que um nome
-                de conta mais longo consome. Com `overflow-hidden` o excesso era cortado em
-                silêncio; rolando, no pior caso o usuário arrasta. */}
-            <table className="w-full text-left text-sm">
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {contas.map((conta) => (
-                  <tr key={conta.id}>
-                    <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{conta.nome}</td>
-                    <td
-                      className={`px-4 py-2 text-right font-medium ${
-                        conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
-                      {formatarMoeda(conta.saldo)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          // A mesma grade dos totais acima, e pelo mesmo motivo: ver o comentário deles sobre o
+          // `text-lg` que faz o valor caber em meia tela. O nome quebra linha em vez de ser
+          // cortado — a tabela antiga deixava rolar até ele, e o cartão não rola.
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {contas.map((conta) => (
+              <li key={conta.id} className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
+                <p className="text-sm wrap-break-word text-slate-600 dark:text-slate-300">{conta.nome}</p>
+                <p
+                  className={`mt-1 text-lg font-semibold sm:text-xl ${
+                    conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {formatarMoeda(conta.saldo)}
+                </p>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
@@ -115,7 +141,7 @@ export function Painel() {
         {transacoesRecentes.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma transação cadastrada ainda.</p>
         ) : (
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <div className={`rounded-lg ${VIDRO}`}>
             {/* Ver Transacoes.tsx: abaixo de `sm` a tabela era cortada sem possibilidade
                 de rolar, e o valor — o dado que se vem ao painel para ver — sumia. */}
             <ul className="divide-y divide-slate-100 dark:divide-slate-800 sm:hidden">
@@ -170,6 +196,21 @@ export function Painel() {
           </div>
         )}
       </div>
+
+      {/* O botão continua na página com o modal aberto: é para ele que o foco volta quando
+          a janela fecha, e não para o topo da página. */}
+      <BotaoFlutuante rotulo="Nova transação" onClick={() => setMostrarFormulario(true)} />
+
+      {mostrarFormulario && (
+        <Modal titulo="Nova transação" aoFechar={() => setMostrarFormulario(false)} fecharAoTocarFora={false}>
+          <FormularioTransacao
+            categorias={categorias}
+            contas={contas}
+            aoSalvar={salvar}
+            aoCancelar={() => setMostrarFormulario(false)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

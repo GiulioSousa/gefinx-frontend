@@ -4,6 +4,7 @@ import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from '../componentes/ErroDeCampo'
 import { BotaoDeTema } from '../componentes/BotaoDeTema'
+import { VIDRO } from '../componentes/vidro'
 
 export function Login() {
   const { entrar, sessaoExpirada } = useAutenticacao()
@@ -39,7 +40,7 @@ export function Login() {
           depois de entrar deixaria a primeira tela do app fora do controle do usuário. */}
       <BotaoDeTema className="absolute right-4 top-4" />
 
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <div className={`w-full max-w-sm rounded-lg p-6 ${VIDRO}`}>
         <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Entrar</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">GeFinX · Gerenciador financeiro pessoal</p>
 

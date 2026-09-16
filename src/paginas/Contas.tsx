@@ -3,6 +3,7 @@ import type { Conta } from '../tipos'
 import * as contasApi from '../api/contasApi'
 import type { DadosConta } from '../api/contasApi'
 import { FormularioConta } from '../componentes/FormularioConta'
+import { VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 
 function formatarMoeda(valor: number): string {
@@ -110,7 +111,7 @@ export function Contas() {
       {contas.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma conta cadastrada.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className={`overflow-x-auto rounded-lg ${VIDRO}`}>
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
               <tr>

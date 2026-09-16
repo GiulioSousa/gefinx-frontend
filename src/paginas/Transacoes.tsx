@@ -4,14 +4,16 @@ import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
 import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
+import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
+import { FiltroDeTransacoes } from '../componentes/FiltroDeTransacoes'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
+import { Modal } from '../componentes/Modal'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
+import { VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
 
 /** O mesmo padrão da API. Cabe numa tela sem rolagem longa e sobra folga até o teto de 100. */
 const TAMANHO_DA_PAGINA = 20
-
-const ENTRADA = 'w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100'
 
 function formatarData(data: string): string {
   return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR')
@@ -25,6 +27,7 @@ export function Transacoes() {
   const [erro, setErro] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [transacaoEmEdicao, setTransacaoEmEdicao] = useState<Transacao | undefined>(undefined)
+  const [mostrarFiltro, setMostrarFiltro] = useState(false)
 
   const [pagina, setPagina] = useState(0)
   const [filtro, setFiltro] = useState<FiltroTransacoes>({})
@@ -102,14 +105,15 @@ export function Transacoes() {
    * 4 e filtrasse por um recorte de duas páginas cairia num vazio, e concluiria que o filtro
    * não encontrou nada.
    */
-  function ajustarFiltro(mudanca: Partial<FiltroTransacoes>) {
-    setFiltro((atual) => ({ ...atual, ...mudanca }))
+  function aplicarFiltro(novoFiltro: FiltroTransacoes) {
+    setFiltro(novoFiltro)
     setPagina(0)
+    setMostrarFiltro(false)
   }
 
-  function limparFiltros() {
-    setFiltro({})
-    setPagina(0)
+  function fecharFormulario() {
+    setMostrarFormulario(false)
+    setTransacaoEmEdicao(undefined)
   }
 
   function abrirNovoFormulario() {
@@ -129,8 +133,7 @@ export function Transacoes() {
       } else {
         await transacoesApi.criarTransacao(dados)
       }
-      setMostrarFormulario(false)
-      setTransacaoEmEdicao(undefined)
+      fecharFormulario()
       // O aviso descrevia uma falha anterior que o salvamento acabou de tornar passado.
       // Deixá-lo na tela faz a interface afirmar algo que já não é verdade.
       setErro('')
@@ -154,119 +157,59 @@ export function Transacoes() {
     }
   }
 
-  const temFiltro = Object.values(filtro).some((valor) => valor !== undefined && valor !== '')
+  const quantidadeDeFiltros = Object.values(filtro).filter((valor) => valor !== undefined && valor !== '').length
+  const temFiltro = quantidadeDeFiltros > 0
   const primeiroDaPagina = totalItens === 0 ? 0 : pagina * TAMANHO_DA_PAGINA + 1
   const ultimoDaPagina = pagina * TAMANHO_DA_PAGINA + transacoes.length
+  const rotuloDoFiltro = temFiltro
+    ? `Filtrar transações (${quantidadeDeFiltros} ${quantidadeDeFiltros === 1 ? 'filtro ativo' : 'filtros ativos'})`
+    : 'Filtrar transações'
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Transações</h1>
-        {!mostrarFormulario && (
-          <button
-            onClick={abrirNovoFormulario}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+
+        {/*
+          Com os filtros escondidos num modal, a lista filtrada pareceria a lista inteira. O
+          número sobre o ícone é o que avisa que há um recorte — e quantos. Fundo verde 700,
+          e não 600: branco sobre o 600 fica abaixo de AA (ver PALETA.md).
+        */}
+        <button
+          type="button"
+          onClick={() => setMostrarFiltro(true)}
+          title={rotuloDoFiltro}
+          aria-label={rotuloDoFiltro}
+          className={`relative rounded-md p-2 ${
+            temFiltro
+              ? 'text-emerald-700 dark:text-emerald-400'
+              : 'text-slate-600 dark:text-slate-300'
+          } hover:bg-slate-100 dark:hover:bg-slate-800`}
+        >
+          <svg
+            className="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            Nova transação
-          </button>
-        )}
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          {temFiltro && (
+            <span
+              aria-hidden="true"
+              className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-700 px-1 text-[11px] leading-none font-semibold text-white"
+            >
+              {quantidadeDeFiltros}
+            </span>
+          )}
+        </button>
       </div>
 
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
-
-      {mostrarFormulario && (
-        <FormularioTransacao
-          categorias={categorias}
-          contas={contas}
-          transacaoInicial={transacaoEmEdicao}
-          aoSalvar={salvar}
-          aoCancelar={() => {
-            setMostrarFormulario(false)
-            setTransacaoEmEdicao(undefined)
-          }}
-        />
-      )}
-
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <label className="text-sm text-slate-600 dark:text-slate-300">
-            De
-            <input
-              type="date"
-              value={filtro.dataInicio ?? ''}
-              onChange={(evento) => ajustarFiltro({ dataInicio: evento.target.value || undefined })}
-              className={ENTRADA}
-            />
-          </label>
-          <label className="text-sm text-slate-600 dark:text-slate-300">
-            Até
-            <input
-              type="date"
-              value={filtro.dataFim ?? ''}
-              onChange={(evento) => ajustarFiltro({ dataFim: evento.target.value || undefined })}
-              className={ENTRADA}
-            />
-          </label>
-          <label className="text-sm text-slate-600 dark:text-slate-300">
-            Tipo
-            <select
-              value={filtro.tipo ?? ''}
-              onChange={(evento) =>
-                ajustarFiltro({ tipo: (evento.target.value || undefined) as FiltroTransacoes['tipo'] })
-              }
-              className={ENTRADA}
-            >
-              <option value="">Todos</option>
-              <option value="RECEITA">Receita</option>
-              <option value="DESPESA">Despesa</option>
-              <option value="TRANSFERENCIA">Transferência</option>
-            </select>
-          </label>
-          <label className="text-sm text-slate-600 dark:text-slate-300">
-            Conta
-            <select
-              value={filtro.contaId ?? ''}
-              onChange={(evento) =>
-                ajustarFiltro({ contaId: evento.target.value ? Number(evento.target.value) : undefined })
-              }
-              className={ENTRADA}
-            >
-              <option value="">Todas</option>
-              {contas.map((conta) => (
-                <option key={conta.id} value={conta.id}>
-                  {conta.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm text-slate-600 dark:text-slate-300">
-            Categoria
-            <select
-              value={filtro.categoriaId ?? ''}
-              onChange={(evento) =>
-                ajustarFiltro({ categoriaId: evento.target.value ? Number(evento.target.value) : undefined })
-              }
-              className={ENTRADA}
-            >
-              <option value="">Todas</option>
-              {categorias.map((categoria) => (
-                <option key={categoria.id} value={categoria.id}>
-                  {categoria.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {temFiltro && (
-          <button
-            onClick={limparFiltros}
-            className="mt-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-          >
-            Limpar filtros
-          </button>
-        )}
-      </div>
 
       {carregando ? (
         <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
@@ -277,7 +220,7 @@ export function Transacoes() {
             : 'Nenhuma transação cadastrada ainda.'}
         </p>
       ) : (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className={`rounded-lg ${VIDRO}`}>
           {/*
             Cartões abaixo de `sm`, tabela a partir dali. Não é preferência estética: a
             tabela pede 606px e um celular de 375px oferece 343, então Data, Valor e Ações
@@ -394,6 +337,37 @@ export function Transacoes() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Sempre na página, mesmo com o modal aberto: é para ele que o foco volta ao fechar. */}
+      <BotaoFlutuante rotulo="Nova transação" onClick={abrirNovoFormulario} />
+
+      {mostrarFormulario && (
+        <Modal
+          titulo={transacaoEmEdicao ? 'Editar transação' : 'Nova transação'}
+          aoFechar={fecharFormulario}
+          fecharAoTocarFora={false}
+        >
+          <FormularioTransacao
+            categorias={categorias}
+            contas={contas}
+            transacaoInicial={transacaoEmEdicao}
+            aoSalvar={salvar}
+            aoCancelar={fecharFormulario}
+          />
+        </Modal>
+      )}
+
+      {mostrarFiltro && (
+        <Modal titulo="Filtrar transações" aoFechar={() => setMostrarFiltro(false)}>
+          <FiltroDeTransacoes
+            filtro={filtro}
+            contas={contas}
+            categorias={categorias}
+            aoAplicar={aplicarFiltro}
+            aoCancelar={() => setMostrarFiltro(false)}
+          />
+        </Modal>
       )}
     </div>
   )

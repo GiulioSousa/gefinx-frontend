@@ -2,7 +2,14 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { Categoria, Conta, TipoTransacao, Transacao } from '../tipos'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { ErroDeFormulario } from '../api/erros'
+import { CampoDeValor } from './CampoDeValor'
 import { ErroDeCampo } from './ErroDeCampo'
+
+const TIPOS: { tipo: TipoTransacao; rotulo: string }[] = [
+  { tipo: 'DESPESA', rotulo: 'Despesa' },
+  { tipo: 'RECEITA', rotulo: 'Receita' },
+  { tipo: 'TRANSFERENCIA', rotulo: 'Transferência' },
+]
 
 interface FormularioTransacaoProps {
   categorias: Categoria[]
@@ -24,7 +31,7 @@ export function FormularioTransacao({
   aoCancelar,
 }: FormularioTransacaoProps) {
   const [descricao, setDescricao] = useState(transacaoInicial?.descricao ?? '')
-  const [valor, setValor] = useState(transacaoInicial ? String(transacaoInicial.valor) : '')
+  const [centavos, setCentavos] = useState(transacaoInicial ? Math.round(transacaoInicial.valor * 100) : 0)
   const [tipo, setTipo] = useState<TipoTransacao>(transacaoInicial?.tipo ?? 'DESPESA')
   const [categoriaId, setCategoriaId] = useState<number | ''>(transacaoInicial?.categoriaId ?? '')
   // Pré-seleciona quando só existe uma conta: nesse caso não há escolha a fazer, e
@@ -87,7 +94,7 @@ export function FormularioTransacao({
     try {
       await aoSalvar({
         descricao,
-        valor: Number(valor),
+        valor: centavos / 100,
         tipo,
         contaId,
         categoriaId: ehTransferencia ? undefined : (categoriaId as number),
@@ -104,7 +111,8 @@ export function FormularioTransacao({
   }
 
   return (
-    <form onSubmit={aoSubmeter} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+    // Sem cartão próprio: o formulário só abre dentro do Modal, que já é o vidro em volta.
+    <form onSubmit={aoSubmeter}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
@@ -112,36 +120,45 @@ export function FormularioTransacao({
             value={descricao}
             onChange={(evento) => setDescricao(evento.target.value)}
             required
+            data-foco-inicial
             className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             placeholder={ehTransferencia ? 'Ex: Reserva do mes' : 'Ex: Supermercado'}
           />
           <ErroDeCampo mensagem={errosPorCampo.descricao} />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</label>
-          <select
-            value={tipo}
-            onChange={(evento) => trocarTipo(evento.target.value as TipoTransacao)}
-            className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-          >
-            <option value="DESPESA">Despesa</option>
-            <option value="RECEITA">Receita</option>
-            <option value="TRANSFERENCIA">Transferência</option>
-          </select>
-        </div>
+        {/* Três opções à vista, e não escondidas numa lista: o tipo muda quais campos o
+            formulário pede, então é melhor que ele se escolha antes de preencher o resto. A
+            linha inteira, porque "Transferência" não cabe ao lado das outras em meia coluna. */}
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</legend>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {TIPOS.map((opcao) => (
+              <label
+                key={opcao.tipo}
+                className="flex items-center gap-2 py-1 text-sm text-slate-700 dark:text-slate-300"
+              >
+                <input
+                  type="radio"
+                  name="tipo"
+                  value={opcao.tipo}
+                  checked={tipo === opcao.tipo}
+                  onChange={() => trocarTipo(opcao.tipo)}
+                  className="h-4 w-4 accent-emerald-600 dark:accent-emerald-400"
+                />
+                {opcao.rotulo}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor (R$)</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={valor}
-            onChange={(evento) => setValor(evento.target.value)}
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor</label>
+          <CampoDeValor
+            centavos={centavos}
+            aoMudar={setCentavos}
             required
             className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-            placeholder="0,00"
           />
           <ErroDeCampo mensagem={errosPorCampo.valor} />
         </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Categoria, TipoCategoria } from '../tipos'
 import * as categoriasApi from '../api/categoriasApi'
 import { FormularioCategoria } from '../componentes/FormularioCategoria'
+import { VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 
 export function Categorias() {
@@ -120,7 +121,7 @@ interface ListaCategoriasProps {
 
 function ListaCategorias({ titulo, categorias, aoEditar, aoExcluir }: ListaCategoriasProps) {
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+    <div className={`rounded-lg ${VIDRO}`}>
       <h2 className="border-b border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300">{titulo}</h2>
       {categorias.length === 0 ? (
         <p className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">Nenhuma categoria cadastrada.</p>
