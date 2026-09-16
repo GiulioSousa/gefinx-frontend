@@ -95,6 +95,12 @@ export function Painel() {
         320px comportam até "R$ 128.450,90"; num de 375px sobra folga para a casa dos milhões.
       */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className={`col-span-2 rounded-lg p-3 sm:col-span-1 sm:p-5 ${VIDRO}`}>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Saldo</p>
+          <p className={`mt-1 text-lg font-semibold sm:text-2xl ${(saldo?.saldo ?? 0) >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
+            {formatarMoeda(saldo?.saldo ?? 0)}
+          </p>
+        </div>
         <div className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
           <p className="text-sm text-slate-500 dark:text-slate-400">Receitas</p>
           <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400 sm:text-2xl">{formatarMoeda(saldo?.totalReceitas ?? 0)}</p>
@@ -103,12 +109,6 @@ export function Painel() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Despesas</p>
           <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-400 sm:text-2xl">{formatarMoeda(saldo?.totalDespesas ?? 0)}</p>
         </div>
-        <div className={`col-span-2 rounded-lg p-3 sm:col-span-1 sm:p-5 ${VIDRO}`}>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Saldo</p>
-          <p className={`mt-1 text-lg font-semibold sm:text-2xl ${(saldo?.saldo ?? 0) >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
-            {formatarMoeda(saldo?.saldo ?? 0)}
-          </p>
-        </div>
       </div>
 
       <div>
@@ -116,27 +116,23 @@ export function Painel() {
         {contas.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma conta cadastrada.</p>
         ) : (
-          <div className={`overflow-x-auto rounded-lg ${VIDRO}`}>
-            {/* Duas colunas cabem com folga de 2px numa tela de 375px — folga que um nome
-                de conta mais longo consome. Com `overflow-hidden` o excesso era cortado em
-                silêncio; rolando, no pior caso o usuário arrasta. */}
-            <table className="w-full text-left text-sm">
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {contas.map((conta) => (
-                  <tr key={conta.id}>
-                    <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{conta.nome}</td>
-                    <td
-                      className={`px-4 py-2 text-right font-medium ${
-                        conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
-                      {formatarMoeda(conta.saldo)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          // A mesma grade dos totais acima, e pelo mesmo motivo: ver o comentário deles sobre o
+          // `text-lg` que faz o valor caber em meia tela. O nome quebra linha em vez de ser
+          // cortado — a tabela antiga deixava rolar até ele, e o cartão não rola.
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {contas.map((conta) => (
+              <li key={conta.id} className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
+                <p className="text-sm wrap-break-word text-slate-600 dark:text-slate-300">{conta.nome}</p>
+                <p
+                  className={`mt-1 text-lg font-semibold sm:text-xl ${
+                    conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {formatarMoeda(conta.saldo)}
+                </p>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
