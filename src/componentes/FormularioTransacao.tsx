@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { Categoria, Conta, TipoTransacao, Transacao } from '../tipos'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { ErroDeFormulario } from '../api/erros'
+import { CampoDeValor } from './CampoDeValor'
 import { ErroDeCampo } from './ErroDeCampo'
 
 interface FormularioTransacaoProps {
@@ -24,7 +25,7 @@ export function FormularioTransacao({
   aoCancelar,
 }: FormularioTransacaoProps) {
   const [descricao, setDescricao] = useState(transacaoInicial?.descricao ?? '')
-  const [valor, setValor] = useState(transacaoInicial ? String(transacaoInicial.valor) : '')
+  const [centavos, setCentavos] = useState(transacaoInicial ? Math.round(transacaoInicial.valor * 100) : 0)
   const [tipo, setTipo] = useState<TipoTransacao>(transacaoInicial?.tipo ?? 'DESPESA')
   const [categoriaId, setCategoriaId] = useState<number | ''>(transacaoInicial?.categoriaId ?? '')
   // Pré-seleciona quando só existe uma conta: nesse caso não há escolha a fazer, e
@@ -87,7 +88,7 @@ export function FormularioTransacao({
     try {
       await aoSalvar({
         descricao,
-        valor: Number(valor),
+        valor: centavos / 100,
         tipo,
         contaId,
         categoriaId: ehTransferencia ? undefined : (categoriaId as number),
@@ -134,16 +135,12 @@ export function FormularioTransacao({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor (R$)</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={valor}
-            onChange={(evento) => setValor(evento.target.value)}
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor</label>
+          <CampoDeValor
+            centavos={centavos}
+            aoMudar={setCentavos}
             required
             className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-            placeholder="0,00"
           />
           <ErroDeCampo mensagem={errosPorCampo.valor} />
         </div>
