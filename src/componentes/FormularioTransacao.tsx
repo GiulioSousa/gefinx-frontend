@@ -3,7 +3,6 @@ import type { Categoria, Conta, TipoTransacao, Transacao } from '../tipos'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from './ErroDeCampo'
-import { VIDRO } from './vidro'
 
 interface FormularioTransacaoProps {
   categorias: Categoria[]
@@ -105,7 +104,8 @@ export function FormularioTransacao({
   }
 
   return (
-    <form onSubmit={aoSubmeter} className={`rounded-lg p-4 ${VIDRO}`}>
+    // Sem cartão próprio: o formulário só abre dentro do Modal, que já é o vidro em volta.
+    <form onSubmit={aoSubmeter}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
@@ -113,6 +113,7 @@ export function FormularioTransacao({
             value={descricao}
             onChange={(evento) => setDescricao(evento.target.value)}
             required
+            data-foco-inicial
             className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             placeholder={ehTransferencia ? 'Ex: Reserva do mes' : 'Ex: Supermercado'}
           />

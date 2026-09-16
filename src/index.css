@@ -20,3 +20,12 @@
 .dark {
   color-scheme: dark;
 }
+
+/*
+  Com um modal aberto, a página por trás não rola. O `showModal` deixa o resto inerte ao
+  toque e ao teclado, mas não à rolagem: no celular, arrastar o dedo sobre o véu rolaria a
+  lista por baixo da janela.
+*/
+html:has(dialog:modal) {
+  overflow: hidden;
+}

@@ -4,7 +4,9 @@ import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
 import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
+import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
+import { Modal } from '../componentes/Modal'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
 import { VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
@@ -113,6 +115,11 @@ export function Transacoes() {
     setPagina(0)
   }
 
+  function fecharFormulario() {
+    setMostrarFormulario(false)
+    setTransacaoEmEdicao(undefined)
+  }
+
   function abrirNovoFormulario() {
     setTransacaoEmEdicao(undefined)
     setMostrarFormulario(true)
@@ -130,8 +137,7 @@ export function Transacoes() {
       } else {
         await transacoesApi.criarTransacao(dados)
       }
-      setMostrarFormulario(false)
-      setTransacaoEmEdicao(undefined)
+      fecharFormulario()
       // O aviso descrevia uma falha anterior que o salvamento acabou de tornar passado.
       // Deixá-lo na tela faz a interface afirmar algo que já não é verdade.
       setErro('')
@@ -163,30 +169,9 @@ export function Transacoes() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Transações</h1>
-        {!mostrarFormulario && (
-          <button
-            onClick={abrirNovoFormulario}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-          >
-            Nova transação
-          </button>
-        )}
       </div>
 
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
-
-      {mostrarFormulario && (
-        <FormularioTransacao
-          categorias={categorias}
-          contas={contas}
-          transacaoInicial={transacaoEmEdicao}
-          aoSalvar={salvar}
-          aoCancelar={() => {
-            setMostrarFormulario(false)
-            setTransacaoEmEdicao(undefined)
-          }}
-        />
-      )}
 
       <div className={`rounded-lg p-4 ${VIDRO}`}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -395,6 +380,25 @@ export function Transacoes() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Sempre na página, mesmo com o modal aberto: é para ele que o foco volta ao fechar. */}
+      <BotaoFlutuante rotulo="Nova transação" onClick={abrirNovoFormulario} />
+
+      {mostrarFormulario && (
+        <Modal
+          titulo={transacaoEmEdicao ? 'Editar transação' : 'Nova transação'}
+          aoFechar={fecharFormulario}
+          fecharAoTocarFora={false}
+        >
+          <FormularioTransacao
+            categorias={categorias}
+            contas={contas}
+            transacaoInicial={transacaoEmEdicao}
+            aoSalvar={salvar}
+            aoCancelar={fecharFormulario}
+          />
+        </Modal>
       )}
     </div>
   )
