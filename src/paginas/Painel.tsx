@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
-import { buscarSaldo, listarTransacoes } from '../api/transacoesApi'
+import { buscarSaldo, criarTransacao, listarTransacoes } from '../api/transacoesApi'
+import type { DadosTransacao } from '../api/transacoesApi'
+import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
-import type { Conta, Saldo, Transacao } from '../tipos'
-import { extrairMensagemErro } from '../api/erros'
+import type { Categoria, Conta, Saldo, Transacao } from '../tipos'
+import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
+import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
+import { FormularioTransacao } from '../componentes/FormularioTransacao'
+import { Modal } from '../componentes/Modal'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
 import { VIDRO } from '../componentes/vidro'
 
@@ -18,8 +23,13 @@ export function Painel() {
   const [saldo, setSaldo] = useState<Saldo | null>(null)
   const [transacoesRecentes, setTransacoesRecentes] = useState<Transacao[]>([])
   const [contas, setContas] = useState<Conta[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  // Incrementar pede uma nova busca, porque o efeito de carga depende dele. É como o painel
+  // se atualiza depois de um lançamento sem piscar o "Carregando...".
+  const [recarga, setRecarga] = useState(0)
 
   useEffect(() => {
     async function carregar() {
@@ -27,14 +37,20 @@ export function Painel() {
         // Cinco linhas pedidas ao servidor, e não o histórico inteiro baixado para
         // descartar tudo menos as cinco primeiras — que era o custo mais caro da tela,
         // crescendo a cada lançamento novo.
-        const [saldoObtido, transacoes, contasObtidas] = await Promise.all([
+        //
+        // As categorias vêm junto só por causa do formulário de nova transação: são poucas
+        // linhas, e buscá-las no toque do botão faria o formulário abrir com atraso ou, se a
+        // busca falhasse, não abrir.
+        const [saldoObtido, transacoes, contasObtidas, categoriasObtidas] = await Promise.all([
           buscarSaldo(),
           listarTransacoes(0, 5),
           listarContas(),
+          listarCategorias(),
         ])
         setSaldo(saldoObtido)
         setTransacoesRecentes(transacoes.itens)
         setContas(contasObtidas)
+        setCategorias(categoriasObtidas)
       } catch (excecao) {
         setErro(extrairMensagemErro(excecao, 'Não foi possível carregar o painel'))
       } finally {
@@ -42,7 +58,20 @@ export function Painel() {
       }
     }
     carregar()
-  }, [])
+  }, [recarga])
+
+  async function salvar(dados: DadosTransacao) {
+    try {
+      await criarTransacao(dados)
+      setMostrarFormulario(false)
+      // Recarrega o painel inteiro, e não só a lista: o lançamento novo muda os totais, o
+      // saldo da conta e as últimas transações de uma vez.
+      setRecarga((atual) => atual + 1)
+    } catch (excecao) {
+      // Ver Categorias.tsx: a conversão para Error descartava o mapa por campo.
+      throw ErroDeFormulario.de(excecao, 'Não foi possível salvar a transação')
+    }
+  }
 
   if (carregando) {
     return <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
@@ -171,6 +200,21 @@ export function Painel() {
           </div>
         )}
       </div>
+
+      {/* O botão continua na página com o modal aberto: é para ele que o foco volta quando
+          a janela fecha, e não para o topo da página. */}
+      <BotaoFlutuante rotulo="Nova transação" onClick={() => setMostrarFormulario(true)} />
+
+      {mostrarFormulario && (
+        <Modal titulo="Nova transação" aoFechar={() => setMostrarFormulario(false)} fecharAoTocarFora={false}>
+          <FormularioTransacao
+            categorias={categorias}
+            contas={contas}
+            aoSalvar={salvar}
+            aoCancelar={() => setMostrarFormulario(false)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }
