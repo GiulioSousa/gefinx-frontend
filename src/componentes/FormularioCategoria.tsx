@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Categoria, TipoCategoria } from '../tipos'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from './ErroDeCampo'
+import { VIDRO } from './vidro'
 
 interface FormularioCategoriaProps {
   categoriaInicial?: Categoria
@@ -35,7 +36,7 @@ export function FormularioCategoria({ categoriaInicial, aoSalvar, aoCancelar }: 
   }
 
   return (
-    <form onSubmit={aoSubmeter} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+    <form onSubmit={aoSubmeter} className={`rounded-lg p-4 ${VIDRO}`}>
       <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nome</label>

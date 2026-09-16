@@ -3,6 +3,7 @@ import type { Conta } from '../tipos'
 import type { DadosConta } from '../api/contasApi'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from './ErroDeCampo'
+import { VIDRO } from './vidro'
 
 interface FormularioContaProps {
   contaInicial?: Conta
@@ -40,7 +41,7 @@ export function FormularioConta({ contaInicial, aoSalvar, aoCancelar }: Formular
   }
 
   return (
-    <form onSubmit={aoSubmeter} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+    <form onSubmit={aoSubmeter} className={`rounded-lg p-4 ${VIDRO}`}>
       <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nome</label>

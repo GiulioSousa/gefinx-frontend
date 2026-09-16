@@ -6,6 +6,7 @@ import * as transacoesApi from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
+import { VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
 
 /** O mesmo padrão da API. Cabe numa tela sem rolagem longa e sobra folga até o teto de 100. */
@@ -187,7 +188,7 @@ export function Transacoes() {
         />
       )}
 
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+      <div className={`rounded-lg p-4 ${VIDRO}`}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="text-sm text-slate-600 dark:text-slate-300">
             De
@@ -277,7 +278,7 @@ export function Transacoes() {
             : 'Nenhuma transação cadastrada ainda.'}
         </p>
       ) : (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className={`rounded-lg ${VIDRO}`}>
           {/*
             Cartões abaixo de `sm`, tabela a partir dali. Não é preferência estética: a
             tabela pede 606px e um celular de 375px oferece 343, então Data, Valor e Ações

@@ -4,6 +4,7 @@ import { listarContas } from '../api/contasApi'
 import type { Conta, Saldo, Transacao } from '../tipos'
 import { extrairMensagemErro } from '../api/erros'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
+import { VIDRO } from '../componentes/vidro'
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -65,15 +66,15 @@ export function Painel() {
         320px comportam até "R$ 128.450,90"; num de 375px sobra folga para a casa dos milhões.
       */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:p-5">
+        <div className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
           <p className="text-sm text-slate-500 dark:text-slate-400">Receitas</p>
           <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400 sm:text-2xl">{formatarMoeda(saldo?.totalReceitas ?? 0)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:p-5">
+        <div className={`rounded-lg p-3 sm:p-5 ${VIDRO}`}>
           <p className="text-sm text-slate-500 dark:text-slate-400">Despesas</p>
           <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-400 sm:text-2xl">{formatarMoeda(saldo?.totalDespesas ?? 0)}</p>
         </div>
-        <div className="col-span-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm sm:col-span-1 sm:p-5">
+        <div className={`col-span-2 rounded-lg p-3 sm:col-span-1 sm:p-5 ${VIDRO}`}>
           <p className="text-sm text-slate-500 dark:text-slate-400">Saldo</p>
           <p className={`mt-1 text-lg font-semibold sm:text-2xl ${(saldo?.saldo ?? 0) >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
             {formatarMoeda(saldo?.saldo ?? 0)}
@@ -86,7 +87,7 @@ export function Painel() {
         {contas.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma conta cadastrada.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <div className={`overflow-x-auto rounded-lg ${VIDRO}`}>
             {/* Duas colunas cabem com folga de 2px numa tela de 375px — folga que um nome
                 de conta mais longo consome. Com `overflow-hidden` o excesso era cortado em
                 silêncio; rolando, no pior caso o usuário arrasta. */}
@@ -115,7 +116,7 @@ export function Painel() {
         {transacoesRecentes.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma transação cadastrada ainda.</p>
         ) : (
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <div className={`rounded-lg ${VIDRO}`}>
             {/* Ver Transacoes.tsx: abaixo de `sm` a tabela era cortada sem possibilidade
                 de rolar, e o valor — o dado que se vem ao painel para ver — sumia. */}
             <ul className="divide-y divide-slate-100 dark:divide-slate-800 sm:hidden">

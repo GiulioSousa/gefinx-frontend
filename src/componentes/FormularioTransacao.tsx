@@ -3,6 +3,7 @@ import type { Categoria, Conta, TipoTransacao, Transacao } from '../tipos'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from './ErroDeCampo'
+import { VIDRO } from './vidro'
 
 interface FormularioTransacaoProps {
   categorias: Categoria[]
@@ -104,7 +105,7 @@ export function FormularioTransacao({
   }
 
   return (
-    <form onSubmit={aoSubmeter} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+    <form onSubmit={aoSubmeter} className={`rounded-lg p-4 ${VIDRO}`}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
