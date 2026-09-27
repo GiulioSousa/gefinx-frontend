@@ -4,6 +4,7 @@ import type { DadosTransacao } from '../api/transacoesApi'
 import { ErroDeFormulario } from '../api/erros'
 import { CampoDeValor } from './CampoDeValor'
 import { ErroDeCampo } from './ErroDeCampo'
+import { dataLocal } from './periodo'
 
 const TIPOS: { tipo: TipoTransacao; rotulo: string }[] = [
   { tipo: 'DESPESA', rotulo: 'Despesa' },
@@ -19,8 +20,9 @@ interface FormularioTransacaoProps {
   aoCancelar: () => void
 }
 
+/** Ver `dataLocal`: com `toISOString`, das 21h à meia-noite o padrão era o dia seguinte. */
 function dataDeHoje(): string {
-  return new Date().toISOString().slice(0, 10)
+  return dataLocal(new Date())
 }
 
 export function FormularioTransacao({
