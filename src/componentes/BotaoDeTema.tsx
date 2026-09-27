@@ -3,8 +3,11 @@ import { useTema } from '../contextos/ContextoTema'
 /**
  * Alterna entre claro e escuro. O ícone mostra o tema para onde o clique leva, e não o
  * atual: sozinho na barra, um sol num fundo já claro não diria se é estado ou destino.
+ *
+ * Com `comRotulo` vira uma opção do menu da conta, com o destino escrito ao lado do ícone:
+ * numa lista de opções em texto, um ícone sozinho seria a única sem nome.
  */
-export function BotaoDeTema({ className = '' }: { className?: string }) {
+export function BotaoDeTema({ className = '', comRotulo = false }: { className?: string; comRotulo?: boolean }) {
   const { tema, alternarTema } = useTema()
   const paraEscuro = tema === 'claro'
   const rotulo = paraEscuro ? 'Ativar tema escuro' : 'Ativar tema claro'
@@ -13,9 +16,13 @@ export function BotaoDeTema({ className = '' }: { className?: string }) {
     <button
       type="button"
       onClick={alternarTema}
-      title={rotulo}
-      aria-label={rotulo}
-      className={`rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${className}`}
+      title={comRotulo ? undefined : rotulo}
+      aria-label={comRotulo ? undefined : rotulo}
+      className={
+        comRotulo
+          ? `flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 ${className}`
+          : `rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${className}`
+      }
     >
       <svg
         className="h-5 w-5"
@@ -43,6 +50,7 @@ export function BotaoDeTema({ className = '' }: { className?: string }) {
           </>
         )}
       </svg>
+      {comRotulo && (paraEscuro ? 'Tema escuro' : 'Tema claro')}
     </button>
   )
 }

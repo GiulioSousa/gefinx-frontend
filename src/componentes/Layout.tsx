@@ -4,6 +4,7 @@ import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { encerrarTodasAsSessoes } from '../api/sessoesApi'
 import { extrairMensagemErro } from '../api/erros'
 import { BotaoDeTema } from './BotaoDeTema'
+import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
 import { BOLHA, VIDRO } from './vidro'
 
 const linkClasse = ({ isActive }: { isActive: boolean }) =>
@@ -96,7 +97,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const [encerrando, setEncerrando] = useState(false)
   const [erro, setErro] = useState('')
-  const [menuContaAberto, setMenuContaAberto] = useState(false)
+  // O botão que abriu o menu da conta, ou `null` com ele fechado. O menu precisa do
+  // elemento, e não só de um "aberto": é embaixo dele que aparece.
+  const [ancoraDaConta, setAncoraDaConta] = useState<HTMLElement | null>(null)
 
   // A bolha da aba ativa é uma peça só, que desliza entre as abas, e não uma por aba — o
   // deslizar é o que dá ao vidro a impressão de líquido. Por isso ela precisa saber a
@@ -156,82 +159,72 @@ export function Layout({ children }: { children: ReactNode }) {
             </nav>
 
             {/*
-              Tema e conta ficam juntos na ponta direita em qualquer largura. O bloco da
-              conta entra na frente deles só quando há espaço para a linha inteira.
+              Um ícone só na ponta direita, em qualquer largura: nome, tema e as duas saídas
+              moram no menu dele. No computador eles ficavam soltos na linha do cabeçalho, e
+              no celular atrás deste mesmo ícone — agora as duas larguras são a mesma tela.
+              Sair não é destino, e por isso não virou aba: a barra de abas guarda só lugares
+              para onde se vai.
             */}
-            <div className="flex items-center gap-3">
-              <div className="hidden items-center gap-3 sm:flex">
-                <span className="text-sm text-slate-500 dark:text-slate-400">{usuario}</span>
-                <button
-                  onClick={aoEncerrarTodas}
-                  disabled={encerrando}
-                  className="text-sm text-slate-500 dark:text-slate-400 underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200 hover:underline disabled:opacity-60"
-                >
-                  {encerrando ? 'Encerrando...' : 'Sair de todos'}
-                </button>
-                <button
-                  onClick={aoSair}
-                  className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  Sair
-                </button>
-              </div>
-
-              <BotaoDeTema />
-
-              {/*
-                Sair não é destino, e por isso não virou aba: fica no cabeçalho, atrás do
-                ícone da conta. A barra de abas guarda só lugares para onde se vai.
-              */}
-              <button
-                type="button"
-                onClick={() => setMenuContaAberto((aberto) => !aberto)}
-                aria-expanded={menuContaAberto}
-                aria-controls="menu-conta"
-                aria-label={menuContaAberto ? 'Fechar menu da conta' : 'Abrir menu da conta'}
-                className={`rounded-md p-2 sm:hidden ${
-                  menuContaAberto
-                    ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+            <button
+              type="button"
+              onClick={(evento) => {
+                const botao = evento.currentTarget
+                setAncoraDaConta((atual) => (atual ? null : botao))
+              }}
+              aria-expanded={ancoraDaConta !== null}
+              aria-controls="menu-conta"
+              aria-label={ancoraDaConta ? 'Fechar menu da conta' : 'Abrir menu da conta'}
+              title="Conta"
+              className={`rounded-md p-2 ${
+                ancoraDaConta
+                  ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
               >
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </button>
-            </div>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
           </div>
 
-          {menuContaAberto && (
-            <div
+          {ancoraDaConta && (
+            <MenuFlutuante
               id="menu-conta"
-              className="flex flex-col gap-2 border-t border-slate-200 dark:border-slate-800 py-3 sm:hidden"
+              rotulo="Menu da conta"
+              ancora={ancoraDaConta}
+              aoFechar={() => setAncoraDaConta(null)}
             >
-              <span className="px-3 text-sm text-slate-500 dark:text-slate-400">{usuario}</span>
-              <button
-                onClick={aoEncerrarTodas}
-                disabled={encerrando}
-                className="rounded-md px-3 py-2 text-left text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
-              >
+              <span className="truncate px-3 pt-1.5 pb-2 text-sm text-slate-500 dark:text-slate-400">{usuario}</span>
+              {/* O tema não fecha o menu: quem troca vê a mudança e decide se volta. */}
+              <BotaoDeTema comRotulo />
+              {/* Com ícone, como o tema acima: sem ele o texto das duas começaria mais à
+                  esquerda que o da opção de cima. */}
+              <OpcaoDoMenu aoEscolher={aoEncerrarTodas}>
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                  <line x1="12" y1="2" x2="12" y2="12" />
+                </svg>
                 {encerrando ? 'Encerrando...' : 'Sair de todos'}
-              </button>
-              <button
-                onClick={aoSair}
-                className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-left text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
+              </OpcaoDoMenu>
+              <OpcaoDoMenu aoEscolher={aoSair}>
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
                 Sair
-              </button>
-            </div>
+              </OpcaoDoMenu>
+            </MenuFlutuante>
           )}
         </div>
       </header>
@@ -261,9 +254,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 key={rota.para}
                 to={rota.para}
                 end={rota.exata}
-                // O menu da conta mora no cabeçalho, fora da tela que a aba abre. Deixá-lo
-                // aberto empurraria o conteúdo novo para baixo até um segundo toque.
-                onClick={() => setMenuContaAberto(false)}
                 className={abaClasse}
               >
                 <svg
