@@ -8,7 +8,9 @@ import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
 import { FiltroDeTransacoes } from '../componentes/FiltroDeTransacoes'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
 import { Modal } from '../componentes/Modal'
+import { SeletorDePeriodo } from '../componentes/SeletorDePeriodo'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
+import { descreverIntervalo, intervaloDoPeriodo, mesAtual, type Periodo } from '../componentes/periodo'
 import { VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
 
@@ -30,7 +32,12 @@ export function Transacoes() {
   const [mostrarFiltro, setMostrarFiltro] = useState(false)
 
   const [pagina, setPagina] = useState(0)
-  const [filtro, setFiltro] = useState<FiltroTransacoes>({})
+  // A lista abre no mês corrente, como o painel. O período mora no mesmo filtro que os outros
+  // recortes — o modal mostra as datas dele em "De" e "Até", e "Limpar filtros" o apaga junto.
+  // `periodo` só lembra qual atalho produziu essas datas; fica nulo quando elas foram
+  // escolhidas à mão, ou apagadas.
+  const [periodo, setPeriodo] = useState<Periodo | null>(mesAtual)
+  const [filtro, setFiltro] = useState<FiltroTransacoes>(() => intervaloDoPeriodo(mesAtual()))
   const [totalItens, setTotalItens] = useState(0)
   const [totalPaginas, setTotalPaginas] = useState(0)
 
@@ -106,9 +113,21 @@ export function Transacoes() {
    * não encontrou nada.
    */
   function aplicarFiltro(novoFiltro: FiltroTransacoes) {
+    // Datas mexidas no modal deixam de ser o mês ou os últimos dias que o seletor dizia.
+    // Mantê-lo aceso ali descreveria um recorte que não é mais o da lista.
+    if (novoFiltro.dataInicio !== filtro.dataInicio || novoFiltro.dataFim !== filtro.dataFim) {
+      setPeriodo(null)
+    }
     setFiltro(novoFiltro)
     setPagina(0)
     setMostrarFiltro(false)
+  }
+
+  /** Troca só as datas: tipo, conta e categoria escolhidos no modal continuam valendo. */
+  function escolherPeriodo(novo: Periodo) {
+    setPeriodo(novo)
+    setFiltro((atual) => ({ ...atual, ...intervaloDoPeriodo(novo) }))
+    setPagina(0)
   }
 
   function fecharFormulario() {
@@ -157,8 +176,13 @@ export function Transacoes() {
     }
   }
 
-  const quantidadeDeFiltros = Object.values(filtro).filter((valor) => valor !== undefined && valor !== '').length
+  // O número sobre o funil conta só o que está escondido no modal. As datas ficam de fora
+  // porque estão sempre à vista no seletor, abaixo do título; contá-las deixaria o aviso aceso
+  // desde a abertura da tela, e ele deixaria de avisar alguma coisa.
+  const { tipo, contaId, categoriaId } = filtro
+  const quantidadeDeFiltros = [tipo, contaId, categoriaId].filter((valor) => valor !== undefined).length
   const temFiltro = quantidadeDeFiltros > 0
+  const temPeriodo = filtro.dataInicio !== undefined || filtro.dataFim !== undefined
   const primeiroDaPagina = totalItens === 0 ? 0 : pagina * TAMANHO_DA_PAGINA + 1
   const ultimoDaPagina = pagina * TAMANHO_DA_PAGINA + transacoes.length
   const rotuloDoFiltro = temFiltro
@@ -209,6 +233,12 @@ export function Transacoes() {
         </button>
       </div>
 
+      <SeletorDePeriodo
+        periodo={periodo}
+        aoMudar={escolherPeriodo}
+        descricaoForaDosAtalhos={descreverIntervalo(filtro.dataInicio, filtro.dataFim)}
+      />
+
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
       {carregando ? (
@@ -217,7 +247,9 @@ export function Transacoes() {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {temFiltro
             ? 'Nenhuma transação encontrada para esses filtros.'
-            : 'Nenhuma transação cadastrada ainda.'}
+            : temPeriodo
+              ? 'Nenhuma transação neste período.'
+              : 'Nenhuma transação cadastrada ainda.'}
         </p>
       ) : (
         <div className={`rounded-lg ${VIDRO}`}>
