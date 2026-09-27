@@ -20,8 +20,11 @@ const linkClasse = ({ isActive }: { isActive: boolean }) =>
 // lugares: o fundo da barra é translúcido, e o que passa por baixo come parte do contraste
 // que num cartão opaco sobraria. Negrito e a bolha repetem o estado para quem não distingue
 // a cor.
+//
+// Abaixo de 360px, 11px e letras mais juntas: com cinco abas num aparelho de 320, cada uma
+// fica com 55px, e "Transações" em 12px pede 60.
 const abaClasse = ({ isActive }: { isActive: boolean }) =>
-  `relative z-10 flex flex-1 flex-col items-center gap-0.5 py-1.5 text-xs transition-colors ${
+  `relative z-10 flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 text-xs transition-colors max-[359px]:text-[11px] max-[359px]:tracking-tight ${
     isActive
       ? 'font-semibold text-emerald-700 dark:text-emerald-400'
       : 'font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
@@ -36,13 +39,20 @@ const abaClasse = ({ isActive }: { isActive: boolean }) =>
   A curva passa um pouco do ponto e volta: é essa sobra que faz a bolha parecer líquida, e
   não uma peça rígida trocando de lugar.
 */
+//
+// A largura do trilho vem do número de abas, no `style`, e não de uma classe fixa: com a
+// quinta aba, um `w-1/4` deixaria a bolha fora do lugar a partir da segunda. A bolha, por sua
+// vez, não passa da largura da aba — com cinco numa tela de celular, os 96px de antes
+// invadiriam as vizinhas.
 const TRILHO_DA_BOLHA =
-  'absolute inset-y-0 left-0 flex w-1/4 items-center justify-center motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.34,1.4,0.64,1)]'
+  'absolute inset-y-0 left-0 flex items-center justify-center motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.34,1.4,0.64,1)]'
 
-const BOLHA_DA_ABA = `h-full w-24 rounded-full ${BOLHA}`
+const BOLHA_DA_ABA = `h-full w-full max-w-24 rounded-full ${BOLHA}`
 
 // Os ícones seguem o traço do BotaoDeTema: 24×24, contorno de 2, pontas arredondadas.
-const ROTAS: { para: string; rotulo: string; exata: boolean; icone: ReactNode }[] = [
+// `rotuloNaAba` é o nome na barra do celular, quando o de sempre não cabe: com cinco abas, cada
+// uma tem uns 64px, e "Planejamento" pede 75 — alargaria a sua aba e tiraria a bolha do lugar.
+const ROTAS: { para: string; rotulo: string; rotuloNaAba?: string; exata: boolean; icone: ReactNode }[] = [
   {
     para: '/',
     rotulo: 'Painel',
@@ -244,7 +254,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <span
                 aria-hidden="true"
                 className={TRILHO_DA_BOLHA}
-                style={{ transform: `translateX(${indiceAtivo * 100}%)` }}
+                style={{ width: `${100 / ROTAS.length}%`, transform: `translateX(${indiceAtivo * 100}%)` }}
               >
                 <span className={BOLHA_DA_ABA} />
               </span>
@@ -268,7 +278,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 >
                   {rota.icone}
                 </svg>
-                {rota.rotulo}
+                {rota.rotuloNaAba ?? rota.rotulo}
               </NavLink>
             ))}
           </div>
