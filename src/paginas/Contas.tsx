@@ -3,7 +3,8 @@ import type { Conta } from '../tipos'
 import * as contasApi from '../api/contasApi'
 import type { DadosConta } from '../api/contasApi'
 import { FormularioConta } from '../componentes/FormularioConta'
-import { VIDRO } from '../componentes/vidro'
+import { MenuFlutuante, OpcaoDoMenu } from '../componentes/MenuFlutuante'
+import { LINHA_TOCAVEL, VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 
 function formatarMoeda(valor: number): string {
@@ -16,6 +17,7 @@ export function Contas() {
   const [erro, setErro] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [contaEmEdicao, setContaEmEdicao] = useState<Conta | undefined>(undefined)
+  const [menu, setMenu] = useState<{ conta: Conta; ancora: HTMLElement } | null>(null)
 
   async function carregarDados() {
     setCarregando(true)
@@ -81,6 +83,11 @@ export function Contas() {
 
   const total = contas.reduce((soma, conta) => soma + conta.saldo, 0)
 
+  // Tocar de novo na conta que abriu o menu o fecha; tocar em outra o leva para ela.
+  function alternarMenu(conta: Conta, ancora: HTMLElement) {
+    setMenu((atual) => (atual?.conta.id === conta.id ? null : { conta, ancora }))
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -117,33 +124,35 @@ export function Contas() {
               <tr>
                 <th className="px-4 py-2 font-medium">Conta</th>
                 <th className="px-4 py-2 text-right font-medium">Saldo</th>
-                <th className="px-4 py-2 text-right font-medium">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {contas.map((conta) => (
-                <tr key={conta.id}>
-                  <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{conta.nome}</td>
+                // A linha inteira abre o menu de Renomear e Excluir. Uma linha de tabela não
+                // pode ser botão, e por isso o nome é: é ele que o teclado e o leitor de tela
+                // alcançam, e o clique nele sobe até a linha.
+                <tr
+                  key={conta.id}
+                  onClick={(evento) => alternarMenu(conta, evento.currentTarget)}
+                  data-aberta={menu?.conta.id === conta.id ? '' : undefined}
+                  className={LINHA_TOCAVEL}
+                >
+                  <td className="px-4 py-2 text-slate-900 dark:text-slate-100">
+                    <button
+                      type="button"
+                      aria-haspopup="true"
+                      aria-expanded={menu?.conta.id === conta.id}
+                      className="text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                    >
+                      {conta.nome}
+                    </button>
+                  </td>
                   <td
                     className={`px-4 py-2 text-right font-medium ${
                       conta.saldo >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
                     }`}
                   >
                     {formatarMoeda(conta.saldo)}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <button
-                      onClick={() => abrirEdicao(conta)}
-                      className="mr-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-                    >
-                      Renomear
-                    </button>
-                    <button
-                      onClick={() => excluir(conta.id)}
-                      className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
-                    >
-                      Excluir
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -154,11 +163,32 @@ export function Contas() {
                 <td className={`px-4 py-2 text-right font-semibold ${total >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'}`}>
                   {formatarMoeda(total)}
                 </td>
-                <td />
               </tr>
             </tfoot>
           </table>
         </div>
+      )}
+
+      {menu && (
+        <MenuFlutuante rotulo={`Ações da conta ${menu.conta.nome}`} ancora={menu.ancora} aoFechar={() => setMenu(null)}>
+          <OpcaoDoMenu
+            aoEscolher={() => {
+              setMenu(null)
+              abrirEdicao(menu.conta)
+            }}
+          >
+            Renomear
+          </OpcaoDoMenu>
+          <OpcaoDoMenu
+            perigosa
+            aoEscolher={() => {
+              setMenu(null)
+              excluir(menu.conta.id)
+            }}
+          >
+            Excluir
+          </OpcaoDoMenu>
+        </MenuFlutuante>
       )}
     </div>
   )
