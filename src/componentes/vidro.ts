@@ -21,3 +21,15 @@ export const VIDRO = [
   'before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-linear-to-b before:from-white/60 before:to-transparent before:to-50% dark:before:from-white/10',
   '[@media(prefers-reduced-transparency:reduce)]:bg-white/95 dark:[@media(prefers-reduced-transparency:reduce)]:bg-slate-900/10',
 ].join(' ')
+
+/*
+  A bolha que marca a opção ativa sobre o vidro: a aba da barra do celular e o período
+  escolhido no seletor. Só o material, como o VIDRO — tamanho e forma ficam com quem usa.
+  Mora aqui, e não em cada lugar, porque os contrastes da PALETA.md foram medidos com ela, e
+  uma cópia que mudasse sozinha invalidaria a medição sem ninguém notar.
+*/
+export const BOLHA = [
+  'bg-white/75 dark:bg-white/15',
+  'shadow-[0_2px_10px_-2px_rgb(15_23_43/0.25),inset_0_1px_0_rgb(255_255_255/1)]',
+  'dark:shadow-[0_2px_10px_-2px_rgb(0_0_0/0.5),inset_0_1px_0_rgb(255_255_255/0.2)]',
+].join(' ')

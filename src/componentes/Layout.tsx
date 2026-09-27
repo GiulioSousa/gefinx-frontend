@@ -4,7 +4,7 @@ import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { encerrarTodasAsSessoes } from '../api/sessoesApi'
 import { extrairMensagemErro } from '../api/erros'
 import { BotaoDeTema } from './BotaoDeTema'
-import { VIDRO } from './vidro'
+import { BOLHA, VIDRO } from './vidro'
 
 const linkClasse = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -38,12 +38,7 @@ const abaClasse = ({ isActive }: { isActive: boolean }) =>
 const TRILHO_DA_BOLHA =
   'absolute inset-y-0 left-0 flex w-1/4 items-center justify-center motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.34,1.4,0.64,1)]'
 
-const BOLHA = [
-  'h-full w-24 rounded-full',
-  'bg-white/75 dark:bg-white/15',
-  'shadow-[0_2px_10px_-2px_rgb(15_23_43/0.25),inset_0_1px_0_rgb(255_255_255/1)]',
-  'dark:shadow-[0_2px_10px_-2px_rgb(0_0_0/0.5),inset_0_1px_0_rgb(255_255_255/0.2)]',
-].join(' ')
+const BOLHA_DA_ABA = `h-full w-24 rounded-full ${BOLHA}`
 
 // Os ícones seguem o traço do BotaoDeTema: 24×24, contorno de 2, pontas arredondadas.
 const ROTAS: { para: string; rotulo: string; exata: boolean; icone: ReactNode }[] = [
@@ -258,7 +253,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 className={TRILHO_DA_BOLHA}
                 style={{ transform: `translateX(${indiceAtivo * 100}%)` }}
               >
-                <span className={BOLHA} />
+                <span className={BOLHA_DA_ABA} />
               </span>
             )}
             {ROTAS.map((rota) => (
