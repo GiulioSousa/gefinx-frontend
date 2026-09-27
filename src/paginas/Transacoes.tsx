@@ -7,11 +7,12 @@ import type { DadosTransacao } from '../api/transacoesApi'
 import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
 import { FiltroDeTransacoes } from '../componentes/FiltroDeTransacoes'
 import { FormularioTransacao } from '../componentes/FormularioTransacao'
+import { MenuFlutuante, OpcaoDoMenu } from '../componentes/MenuFlutuante'
 import { Modal } from '../componentes/Modal'
 import { SeletorDePeriodo } from '../componentes/SeletorDePeriodo'
 import { ValorDaTransacao } from '../componentes/ValorDaTransacao'
 import { descreverIntervalo, intervaloDoPeriodo, mesAtual, type Periodo } from '../componentes/periodo'
-import { VIDRO } from '../componentes/vidro'
+import { LINHA_TOCAVEL, VIDRO } from '../componentes/vidro'
 import { ErroDeFormulario, extrairMensagemErro, foiCancelada } from '../api/erros'
 
 /** O mesmo padrão da API. Cabe numa tela sem rolagem longa e sobra folga até o teto de 100. */
@@ -30,6 +31,7 @@ export function Transacoes() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [transacaoEmEdicao, setTransacaoEmEdicao] = useState<Transacao | undefined>(undefined)
   const [mostrarFiltro, setMostrarFiltro] = useState(false)
+  const [menu, setMenu] = useState<{ transacao: Transacao; ancora: HTMLElement } | null>(null)
 
   const [pagina, setPagina] = useState(0)
   // A lista abre no mês corrente, como o painel. O período mora no mesmo filtro que os outros
@@ -143,6 +145,11 @@ export function Transacoes() {
   function abrirEdicao(transacao: Transacao) {
     setTransacaoEmEdicao(transacao)
     setMostrarFormulario(true)
+  }
+
+  // Tocar de novo na transação que abriu o menu o fecha; tocar em outra o leva para ela.
+  function alternarMenu(transacao: Transacao, ancora: HTMLElement) {
+    setMenu((atual) => (atual?.transacao.id === transacao.id ? null : { transacao, ancora }))
   }
 
   async function salvar(dados: DadosTransacao) {
@@ -259,43 +266,42 @@ export function Transacoes() {
             ficavam fora da área visível — e o `overflow-hidden` que arredondava os cantos
             impedia rolar até elas. O valor do lançamento, que é o dado principal aqui,
             simplesmente não aparecia, e não havia como editar nem excluir pelo celular.
+
+            Editar e Excluir não ficam à vista em nenhuma das duas: tocar na transação abre o
+            menu com eles, ancorado nela.
           */}
           <ul className="divide-y divide-slate-100 dark:divide-slate-800 sm:hidden">
             {transacoes.map((transacao) => (
-              <li key={transacao.id} className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{transacao.descricao}</p>
-                  <ValorDaTransacao
-                    tipo={transacao.tipo}
-                    valor={transacao.valor}
-                    className="shrink-0 text-right"
-                  />
-                </div>
-
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {transacao.nomeCategoria ?? '—'} ·{' '}
-                  {transacao.nomeContaDestino
-                    ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
-                    : transacao.nomeConta}
-                </p>
-
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{formatarData(transacao.dataTransacao)}</span>
-                  <span>
-                    <button
-                      onClick={() => abrirEdicao(transacao)}
-                      className="mr-4 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => excluir(transacao.id)}
-                      className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
-                    >
-                      Excluir
-                    </button>
+              <li key={transacao.id}>
+                {/* O cartão inteiro é o botão, e por isso só leva `span`: parágrafo e `div`
+                    não cabem dentro de um botão. */}
+                <button
+                  type="button"
+                  onClick={(evento) => alternarMenu(transacao, evento.currentTarget)}
+                  aria-haspopup="true"
+                  aria-expanded={menu?.transacao.id === transacao.id}
+                  className={`${LINHA_TOCAVEL} block w-full p-4 text-left`}
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{transacao.descricao}</span>
+                    <ValorDaTransacao
+                      tipo={transacao.tipo}
+                      valor={transacao.valor}
+                      className="shrink-0 text-right"
+                    />
                   </span>
-                </div>
+
+                  <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">
+                    {transacao.nomeCategoria ?? '—'} ·{' '}
+                    {transacao.nomeContaDestino
+                      ? `${transacao.nomeConta} → ${transacao.nomeContaDestino}`
+                      : transacao.nomeConta}
+                  </span>
+
+                  <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">
+                    {formatarData(transacao.dataTransacao)}
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
@@ -307,14 +313,29 @@ export function Transacoes() {
                 <th className="px-4 py-2 font-medium">Categoria</th>
                 <th className="px-4 py-2 font-medium">Conta</th>
                 <th className="px-4 py-2 font-medium">Data</th>
-                <th className="px-4 py-2 text-right font-medium">Valor</th>
-                <th className="rounded-tr-lg px-4 py-2 text-right font-medium">Ações</th>
+                <th className="rounded-tr-lg px-4 py-2 text-right font-medium">Valor</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {transacoes.map((transacao) => (
-                <tr key={transacao.id}>
-                  <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{transacao.descricao}</td>
+                // Ver Contas.tsx: a linha abre o menu, e a descrição é o botão que o teclado
+                // e o leitor de tela alcançam.
+                <tr
+                  key={transacao.id}
+                  onClick={(evento) => alternarMenu(transacao, evento.currentTarget)}
+                  data-aberta={menu?.transacao.id === transacao.id ? '' : undefined}
+                  className={LINHA_TOCAVEL}
+                >
+                  <td className="px-4 py-2 text-slate-900 dark:text-slate-100">
+                    <button
+                      type="button"
+                      aria-haspopup="true"
+                      aria-expanded={menu?.transacao.id === transacao.id}
+                      className="text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                    >
+                      {transacao.descricao}
+                    </button>
+                  </td>
                   <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{transacao.nomeCategoria ?? '—'}</td>
                   <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
                     {transacao.nomeContaDestino
@@ -324,20 +345,6 @@ export function Transacoes() {
                   <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{formatarData(transacao.dataTransacao)}</td>
                   <td className="px-4 py-2 text-right">
                     <ValorDaTransacao tipo={transacao.tipo} valor={transacao.valor} />
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <button
-                      onClick={() => abrirEdicao(transacao)}
-                      className="mr-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => excluir(transacao.id)}
-                      className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
-                    >
-                      Excluir
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -373,6 +380,32 @@ export function Transacoes() {
 
       {/* Sempre na página, mesmo com o modal aberto: é para ele que o foco volta ao fechar. */}
       <BotaoFlutuante rotulo="Nova transação" onClick={abrirNovoFormulario} />
+
+      {menu && (
+        <MenuFlutuante
+          rotulo={`Ações da transação ${menu.transacao.descricao}`}
+          ancora={menu.ancora}
+          aoFechar={() => setMenu(null)}
+        >
+          <OpcaoDoMenu
+            aoEscolher={() => {
+              setMenu(null)
+              abrirEdicao(menu.transacao)
+            }}
+          >
+            Editar
+          </OpcaoDoMenu>
+          <OpcaoDoMenu
+            perigosa
+            aoEscolher={() => {
+              setMenu(null)
+              excluir(menu.transacao.id)
+            }}
+          >
+            Excluir
+          </OpcaoDoMenu>
+        </MenuFlutuante>
+      )}
 
       {mostrarFormulario && (
         <Modal

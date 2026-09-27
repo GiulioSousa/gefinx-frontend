@@ -33,3 +33,20 @@ export const BOLHA = [
   'shadow-[0_2px_10px_-2px_rgb(15_23_43/0.25),inset_0_1px_0_rgb(255_255_255/1)]',
   'dark:shadow-[0_2px_10px_-2px_rgb(0_0_0/0.5),inset_0_1px_0_rgb(255_255_255/0.2)]',
 ].join(' ')
+
+/*
+  Uma linha de lista que abre um menu ao toque — transação, conta, categoria. Sem os botões
+  de Editar e Excluir à vista, é o realce que diz que a linha responde: ao passar o mouse, e
+  enquanto o menu dela está aberto, para que se saiba de qual linha ele é. Escurece com alfa,
+  e não com uma cor cheia, para não apagar o vidro por baixo.
+
+  O estado aberto vem do `aria-expanded` quando a linha é um botão, e de um `data-aberta`
+  quando é uma linha de tabela, que não pode ser botão.
+*/
+export const LINHA_TOCAVEL = [
+  'cursor-pointer transition-colors',
+  'hover:bg-slate-900/5 dark:hover:bg-white/5',
+  'aria-expanded:bg-slate-900/5 dark:aria-expanded:bg-white/10',
+  'data-aberta:bg-slate-900/5 dark:data-aberta:bg-white/10',
+  'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-500',
+].join(' ')
