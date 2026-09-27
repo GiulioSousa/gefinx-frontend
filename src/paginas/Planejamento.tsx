@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import type { ContaDoPlanejamento, ItemDoPlanejamento, Planejamento as Plano, SituacaoDaDespesa } from '../tipos'
+import type { Categoria, Conta, ContaDoPlanejamento, ItemDoPlanejamento, Planejamento as Plano, SituacaoDaDespesa } from '../tipos'
 import * as planejamentoApi from '../api/planejamentoApi'
-import type { DadosDespesaPlanejada } from '../api/planejamentoApi'
+import type { DadosDespesaPlanejada, DadosPagamento } from '../api/planejamentoApi'
+import { listarCategorias } from '../api/categoriasApi'
+import { listarContas } from '../api/contasApi'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
 import { EscolhaDeContasDoPlanejamento } from '../componentes/EscolhaDeContasDoPlanejamento'
 import { FormularioDespesaPlanejada } from '../componentes/FormularioDespesaPlanejada'
+import { FormularioPagamento } from '../componentes/FormularioPagamento'
 import { MenuFlutuante, OpcaoDoMenu } from '../componentes/MenuFlutuante'
 import { Modal } from '../componentes/Modal'
 import { LINHA_TOCAVEL, VIDRO } from '../componentes/vidro'
@@ -91,6 +94,9 @@ export function Planejamento() {
   const [despesaEmEdicao, setDespesaEmEdicao] = useState<ItemDoPlanejamento | undefined>(undefined)
   const [mostrarContas, setMostrarContas] = useState(false)
   const [menu, setMenu] = useState<{ item: ItemDoPlanejamento; ancora: HTMLElement } | null>(null)
+  // A despesa sendo paga, com as categorias e contas que o formulário oferece. Buscadas só
+  // ao abrir: a tela de planejamento não precisa delas para nada mais.
+  const [pagamento, setPagamento] = useState<{ item: ItemDoPlanejamento; categorias: Categoria[]; contas: Conta[] } | null>(null)
   // Incrementar pede uma nova busca, como no Painel: a tela se atualiza depois de salvar sem
   // voltar ao "Carregando...".
   const [recarga, setRecarga] = useState(0)
@@ -159,6 +165,29 @@ export function Planejamento() {
       recarregar()
     } catch (excecao) {
       setErro(extrairMensagemErro(excecao, 'Não foi possível excluir a despesa'))
+    }
+  }
+
+  async function abrirPagamento(item: ItemDoPlanejamento) {
+    setErro('')
+    try {
+      const [categorias, contasObtidas] = await Promise.all([listarCategorias(), listarContas()])
+      setPagamento({ item, categorias, contas: contasObtidas })
+    } catch (excecao) {
+      setErro(extrairMensagemErro(excecao, 'Não foi possível abrir o pagamento'))
+    }
+  }
+
+  async function pagar(dados: DadosPagamento) {
+    if (!pagamento) {
+      return
+    }
+    try {
+      await planejamentoApi.pagarDespesaPlanejada(pagamento.item.id, dados)
+      setPagamento(null)
+      recarregar()
+    } catch (excecao) {
+      throw ErroDeFormulario.de(excecao, 'Não foi possível registrar o pagamento')
     }
   }
 
@@ -278,6 +307,14 @@ export function Planejamento() {
           <OpcaoDoMenu
             aoEscolher={() => {
               setMenu(null)
+              abrirPagamento(menu.item)
+            }}
+          >
+            Marcar como paga
+          </OpcaoDoMenu>
+          <OpcaoDoMenu
+            aoEscolher={() => {
+              setMenu(null)
               setDespesaEmEdicao(menu.item)
               setMostrarFormulario(true)
             }}
@@ -303,6 +340,19 @@ export function Planejamento() {
           fecharAoTocarFora={false}
         >
           <FormularioDespesaPlanejada despesaInicial={despesaEmEdicao} aoSalvar={salvar} aoCancelar={fecharFormulario} />
+        </Modal>
+      )}
+
+      {pagamento && plano && (
+        <Modal titulo="Pagar despesa" aoFechar={() => setPagamento(null)} fecharAoTocarFora={false}>
+          <FormularioPagamento
+            despesa={pagamento.item}
+            hoje={plano.hoje}
+            categorias={pagamento.categorias}
+            contas={pagamento.contas}
+            aoSalvar={pagar}
+            aoCancelar={() => setPagamento(null)}
+          />
         </Modal>
       )}
 
