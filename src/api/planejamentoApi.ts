@@ -26,6 +26,24 @@ export async function excluirDespesaPlanejada(id: number): Promise<void> {
   await clienteApi.delete(`/despesas-planejadas/${id}`)
 }
 
+/** A transação que paga a despesa. O tipo é sempre despesa, e por isso não vai no corpo. */
+export interface DadosPagamento {
+  descricao: string
+  valor: number
+  dataTransacao: string
+  categoriaId: number
+  contaId: number
+}
+
+/**
+ * Lança a despesa e tira a planejada do plano, numa operação só no servidor. Devolve o id da
+ * transação: excluí-la em Transações desfaz o pagamento, e a despesa volta ao plano.
+ */
+export async function pagarDespesaPlanejada(id: number, dados: DadosPagamento): Promise<number> {
+  const { data } = await clienteApi.post<{ transacaoId: number }>(`/despesas-planejadas/${id}/pagamento`, dados)
+  return data.transacaoId
+}
+
 export async function listarContasDoPlanejamento(): Promise<ContaDoPlanejamento[]> {
   const { data } = await clienteApi.get<ContaDoPlanejamento[]>('/planejamento/contas')
   return data
