@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { FiltroTransacoes, Pagina, Saldo, TipoTransacao, Transacao } from '../tipos'
+import type { FiltroSaldo, FiltroTransacoes, Pagina, Saldo, TipoTransacao, Transacao } from '../tipos'
 
 /**
  * `categoriaId` e `contaDestinoId` são mutuamente exclusivos, conforme o tipo:
@@ -57,10 +57,19 @@ export async function excluirTransacao(id: number): Promise<void> {
   await clienteApi.delete(`/transacoes/${id}`)
 }
 
-/** Sem `contaId`, o consolidado de todas as contas; com ele, só aquela conta. */
-export async function buscarSaldo(contaId?: number): Promise<Saldo> {
-  const { data } = await clienteApi.get<Saldo>('/saldo', {
-    params: contaId === undefined ? undefined : { contaId },
-  })
+/**
+ * Sem `contaId`, o consolidado de todas as contas; com ele, só aquela conta. As datas
+ * recortam o período, como na listagem — e o campo vazio fica fora da URL pelo mesmo motivo.
+ */
+export async function buscarSaldo(filtro: FiltroSaldo = {}, signal?: AbortSignal): Promise<Saldo> {
+  const parametros: Record<string, string | number> = {}
+
+  for (const [chave, valor] of Object.entries(filtro)) {
+    if (valor !== undefined && valor !== '') {
+      parametros[chave] = valor
+    }
+  }
+
+  const { data } = await clienteApi.get<Saldo>('/saldo', { params: parametros, signal })
   return data
 }

@@ -64,3 +64,14 @@ export interface FiltroTransacoes {
   contaId?: number
   categoriaId?: number
 }
+
+/**
+ * Os recortes do saldo, com o mesmo contrato das datas da listagem. Sem nenhum, o saldo de
+ * sempre; com período, os totais e o `saldo` descrevem só o que aconteceu nele — o `saldo`
+ * passa a ser o resultado do período, e não o acumulado até a data.
+ */
+export interface FiltroSaldo {
+  contaId?: number
+  dataInicio?: string
+  dataFim?: string
+}
