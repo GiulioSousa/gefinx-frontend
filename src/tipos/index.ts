@@ -75,3 +75,56 @@ export interface FiltroSaldo {
   dataInicio?: string
   dataFim?: string
 }
+
+/** Um pagamento que ainda vai acontecer. Não é transação, e não mexe no saldo. */
+export interface DespesaPlanejada {
+  id: number
+  descricao: string
+  valor: number
+  prazo: string
+}
+
+/**
+ * - `COBERTA`: o saldo de agora paga esta despesa e todas as que vencem antes dela.
+ * - `EM_ANDAMENTO`: falta dinheiro, e há dias de trabalho até o prazo.
+ * - `SEM_DIAS_DE_TRABALHO`: falta dinheiro e não sobra dia de trabalho antes do prazo.
+ * - `ATRASADA`: o prazo passou e ela não foi paga, mesmo que o saldo já a cubra.
+ */
+export type SituacaoDaDespesa = 'COBERTA' | 'EM_ANDAMENTO' | 'SEM_DIAS_DE_TRABALHO' | 'ATRASADA'
+
+/**
+ * Uma despesa dentro do plano. As despesas disputam o mesmo saldo, por ordem de prazo:
+ * `acumulado` é a soma desta com as que vencem antes, e `falta` é o que o saldo de agora não
+ * cobre desse acumulado — por isso pode passar do valor da própria despesa.
+ *
+ * `porDia` é nulo quando ela não entra na meta: coberta, atrasada ou sem dia de trabalho.
+ */
+export interface ItemDoPlanejamento extends DespesaPlanejada {
+  acumulado: number
+  falta: number
+  diasDeTrabalho: number
+  porDia: number | null
+  situacao: SituacaoDaDespesa
+}
+
+/**
+ * O plano do dia, calculado pelo servidor. `hoje` é o dia que ele considerou, no fuso
+ * configurado. A meta sai do saldo do fim de ontem e fica parada durante o dia; o ganho de
+ * hoje é o saldo de agora menos o de ontem, e `restanteHoje` o que ainda falta dele.
+ */
+export interface Planejamento {
+  hoje: string
+  saldoDeOntem: number
+  saldoAtual: number
+  ganhoDeHoje: number
+  metaDiaria: number
+  restanteHoje: number
+  prazoDecisivo: string | null
+  itens: ItemDoPlanejamento[]
+}
+
+export interface ContaDoPlanejamento {
+  id: number
+  nome: string
+  entraNoPlanejamento: boolean
+}
