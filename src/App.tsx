@@ -8,6 +8,7 @@ import { Painel } from './paginas/Painel'
 import { Transacoes } from './paginas/Transacoes'
 import { Categorias } from './paginas/Categorias'
 import { Contas } from './paginas/Contas'
+import { Planejamento } from './paginas/Planejamento'
 
 function App() {
   return (
@@ -52,6 +53,16 @@ function App() {
                 <RotaProtegida>
                   <Layout>
                     <Contas />
+                  </Layout>
+                </RotaProtegida>
+              }
+            />
+            <Route
+              path="/planejamento"
+              element={
+                <RotaProtegida>
+                  <Layout>
+                    <Planejamento />
                   </Layout>
                 </RotaProtegida>
               }
