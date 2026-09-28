@@ -395,7 +395,8 @@ function CartaoDaMeta({ plano }: { plano: Plano }) {
   const cumprida = plano.restanteHoje <= 0
   const ganhoVisivel = Math.max(0, plano.ganhoDeHoje)
   // Domingo não entra na conta da meta, e uma barra de "hoje" pediria um ganho que o plano
-  // não espera. O dia vem do servidor, que decide pelo fuso configurado.
+  // não espera: nesse dia o cartão mostra só a meta. O dia vem do servidor, que decide pelo
+  // fuso configurado.
   const domingo = new Date(`${plano.hoje}T00:00:00`).getDay() === 0
 
   return (
@@ -410,11 +411,7 @@ function CartaoDaMeta({ plano }: { plano: Plano }) {
         )}
       </div>
 
-      {domingo ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          Domingo não conta como dia de trabalho. O que entrar hoje reduz a meta de amanhã.
-        </p>
-      ) : (
+      {!domingo && (
         <>
           <Barra
             valor={porcentagem(ganhoVisivel, plano.metaDiaria)}
