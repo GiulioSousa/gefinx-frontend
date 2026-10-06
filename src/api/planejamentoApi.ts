@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { ContaDoPlanejamento, DespesaPaga, DespesaPlanejada, Pagina, Planejamento, Recorrencia } from '../tipos'
+import type { ContaDoPlanejamento, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Pagina, Planejamento, Recorrencia } from '../tipos'
 
 export interface DadosDespesaPlanejada {
   descricao: string
@@ -50,6 +50,15 @@ export async function pagarDespesaPlanejada(id: number, dados: DadosPagamento): 
 export async function listarDespesasPagas(pagina: number, tamanho: number): Promise<Pagina<DespesaPaga>> {
   const { data } = await clienteApi.get<Pagina<DespesaPaga>>('/despesas-planejadas/pagas', { params: { pagina, tamanho } })
   return data
+}
+
+/**
+ * Exclui a transação do pagamento e devolve a despesa ao plano. Se ela se repete, a próxima
+ * ocorrência sai junto quando ainda está como nasceu. Recusado com 409 se a próxima já foi paga.
+ */
+export async function desfazerPagamento(id: number): Promise<DesfechoDaProxima> {
+  const { data } = await clienteApi.delete<{ proxima: DesfechoDaProxima }>(`/despesas-planejadas/${id}/pagamento`)
+  return data.proxima
 }
 
 export async function listarContasDoPlanejamento(): Promise<ContaDoPlanejamento[]> {

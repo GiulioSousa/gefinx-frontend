@@ -149,7 +149,14 @@ export interface DespesaPaga {
   conta: string | null
   categoria: string | null
   pagaComAtraso: boolean
+  recorrencia: Recorrencia | null
 }
+
+/**
+ * O que houve com a próxima ocorrência ao desfazer um pagamento: não havia (`NENHUMA`), saiu do
+ * plano por estar como nasceu (`REMOVIDA`), ou ficou por já ter sido editada (`MANTIDA`).
+ */
+export type DesfechoDaProxima = 'NENHUMA' | 'REMOVIDA' | 'MANTIDA'
 
 export interface ContaDoPlanejamento {
   id: number
