@@ -123,6 +123,26 @@ export interface Planejamento {
   itens: ItemDoPlanejamento[]
 }
 
+/**
+ * Uma despesa do histórico: o que se planejou e o que de fato se pagou, que costumam
+ * divergir. Os campos do pagamento só vêm nulos se a transação foi excluída enquanto a página
+ * era montada — e excluí-la devolve a despesa ao plano, de onde ela reaparece.
+ *
+ * `pagaComAtraso` é pagar depois do prazo; no dia do prazo ainda não é atraso.
+ */
+export interface DespesaPaga {
+  id: number
+  descricao: string
+  valorPlanejado: number
+  prazo: string
+  transacaoId: number
+  valorPago: number | null
+  dataPagamento: string | null
+  conta: string | null
+  categoria: string | null
+  pagaComAtraso: boolean
+}
+
 export interface ContaDoPlanejamento {
   id: number
   nome: string

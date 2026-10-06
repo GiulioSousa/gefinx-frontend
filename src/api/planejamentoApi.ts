@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { ContaDoPlanejamento, DespesaPlanejada, Planejamento } from '../tipos'
+import type { ContaDoPlanejamento, DespesaPaga, DespesaPlanejada, Pagina, Planejamento } from '../tipos'
 
 export interface DadosDespesaPlanejada {
   descricao: string
@@ -42,6 +42,12 @@ export interface DadosPagamento {
 export async function pagarDespesaPlanejada(id: number, dados: DadosPagamento): Promise<number> {
   const { data } = await clienteApi.post<{ transacaoId: number }>(`/despesas-planejadas/${id}/pagamento`, dados)
   return data.transacaoId
+}
+
+/** O histórico, do prazo mais recente para o mais antigo. */
+export async function listarDespesasPagas(pagina: number, tamanho: number): Promise<Pagina<DespesaPaga>> {
+  const { data } = await clienteApi.get<Pagina<DespesaPaga>>('/despesas-planejadas/pagas', { params: { pagina, tamanho } })
+  return data
 }
 
 export async function listarContasDoPlanejamento(): Promise<ContaDoPlanejamento[]> {
