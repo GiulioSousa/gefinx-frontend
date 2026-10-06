@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Categoria, Conta, ContaDoPlanejamento, ItemDoPlanejamento, Planejamento as Plano, SituacaoDaDespesa } from '../tipos'
+import type { Categoria, Conta, ContaDoPlanejamento, ItemDoPlanejamento, Planejamento as Plano, Recorrencia, SituacaoDaDespesa } from '../tipos'
 import * as planejamentoApi from '../api/planejamentoApi'
 import type { DadosDespesaPlanejada, DadosPagamento } from '../api/planejamentoApi'
 import { listarCategorias } from '../api/categoriasApi'
@@ -44,6 +44,12 @@ const SELO: Record<SituacaoDaDespesa, { rotulo: string; classe: string } | null>
   EM_ANDAMENTO: null,
   SEM_DIAS_DE_TRABALHO: { rotulo: 'Sem dias de trabalho', classe: 'text-amber-700 dark:text-amber-300' },
   ATRASADA: { rotulo: 'Atrasada', classe: 'text-red-600 dark:text-red-400' },
+}
+
+/** Ao lado do prazo, em texto e não em selo: os selos ficam para a situação da despesa. */
+const REPETICAO: Record<Recorrencia, string> = {
+  SEMANAL: 'toda semana',
+  MENSAL: 'todo mês',
 }
 
 function Barra({ valor, rotulo }: { valor: number; rotulo: string }) {
@@ -157,7 +163,9 @@ export function Planejamento() {
   }
 
   async function excluir(item: ItemDoPlanejamento) {
-    if (!window.confirm(`Excluir "${item.descricao}" do planejamento?`)) {
+    // Excluir a ocorrência pendente encerra a série: a próxima só nasce quando esta é paga.
+    const aviso = item.recorrencia ? ' Ela se repete, e as próximas deixam de entrar no plano.' : ''
+    if (!window.confirm(`Excluir "${item.descricao}" do planejamento?${aviso}`)) {
       return
     }
     setErro('')
@@ -276,6 +284,7 @@ export function Planejamento() {
 
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
                           até {formatarPrazo(item.prazo)}
+                          {item.recorrencia && <span>· {REPETICAO[item.recorrencia]}</span>}
                           {selo && (
                             <span className={`rounded-full border border-current px-2 text-xs font-medium ${selo.classe}`}>
                               {selo.rotulo}

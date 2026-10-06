@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { DespesaPlanejada } from '../tipos'
+import type { DespesaPlanejada, Recorrencia } from '../tipos'
 import type { DadosDespesaPlanejada } from '../api/planejamentoApi'
 import { ErroDeFormulario } from '../api/erros'
 import { CampoDeValor } from './CampoDeValor'
@@ -7,6 +7,12 @@ import { ErroDeCampo } from './ErroDeCampo'
 
 const CAMPO =
   'w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none'
+
+const REPETICOES: { valor: Recorrencia | null; rotulo: string }[] = [
+  { valor: null, rotulo: 'Não repete' },
+  { valor: 'SEMANAL', rotulo: 'Toda semana' },
+  { valor: 'MENSAL', rotulo: 'Todo mês' },
+]
 
 interface FormularioDespesaPlanejadaProps {
   despesaInicial?: DespesaPlanejada
@@ -22,6 +28,7 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
   const [descricao, setDescricao] = useState(despesaInicial?.descricao ?? '')
   const [centavos, setCentavos] = useState(despesaInicial ? Math.round(despesaInicial.valor * 100) : 0)
   const [prazo, setPrazo] = useState(despesaInicial?.prazo ?? '')
+  const [recorrencia, setRecorrencia] = useState<Recorrencia | null>(despesaInicial?.recorrencia ?? null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
@@ -34,7 +41,7 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
     setErrosPorCampo({})
     setSalvando(true)
     try {
-      await aoSalvar({ descricao, valor: centavos / 100, prazo })
+      await aoSalvar({ descricao, valor: centavos / 100, prazo, recorrencia })
     } catch (excecao) {
       const falha = ErroDeFormulario.de(excecao, 'Não foi possível salvar a despesa')
       setErro(falha.message)
@@ -79,7 +86,39 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
           />
           <ErroDeCampo mensagem={errosPorCampo.prazo} />
         </div>
+
+        {/* À vista, como o tipo da transação: são só três, e escondê-las numa lista faria a
+            repetição passar despercebida no cadastro. */}
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Repete</legend>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {REPETICOES.map((opcao) => (
+              <label
+                key={opcao.valor ?? 'nao'}
+                className="flex items-center gap-2 py-1 text-sm text-slate-700 dark:text-slate-300"
+              >
+                <input
+                  type="radio"
+                  name="recorrencia"
+                  value={opcao.valor ?? 'NAO_REPETE'}
+                  checked={recorrencia === opcao.valor}
+                  onChange={() => setRecorrencia(opcao.valor)}
+                  className="h-4 w-4 accent-emerald-600 dark:accent-emerald-400"
+                />
+                {opcao.rotulo}
+              </label>
+            ))}
+          </div>
+          <ErroDeCampo mensagem={errosPorCampo.recorrencia} />
+        </fieldset>
       </div>
+
+      {recorrencia && (
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          Ao marcar como paga, a próxima entra no plano com o mesmo valor, {recorrencia === 'SEMANAL' ? 'uma semana' : 'um mês'}{' '}
+          depois do prazo. Se a conta vier diferente, edite a próxima.
+        </p>
+      )}
 
       <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
         O dia do prazo não conta como dia de trabalho: o que se ganha nele pode chegar depois do pagamento.
