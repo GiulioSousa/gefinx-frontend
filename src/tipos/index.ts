@@ -163,3 +163,21 @@ export interface ContaDoPlanejamento {
   nome: string
   entraNoPlanejamento: boolean
 }
+
+/**
+ * Um mês do relatório. `mes` vem como `2026-10`. Transferências não entram: dinheiro que só
+ * troca de conta não é receita nem despesa. `saldoAoFim` é o consolidado no último dia do mês.
+ */
+export interface MesDoRelatorio {
+  mes: string
+  receitas: number
+  despesas: number
+  resultado: number
+  saldoAoFim: number
+}
+
+export interface TotalDaCategoria {
+  categoriaId: number
+  nome: string
+  total: number
+}
