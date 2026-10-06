@@ -9,6 +9,7 @@ import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
 import { EscolhaDeContasDoPlanejamento } from '../componentes/EscolhaDeContasDoPlanejamento'
 import { FormularioDespesaPlanejada } from '../componentes/FormularioDespesaPlanejada'
 import { FormularioPagamento } from '../componentes/FormularioPagamento'
+import { HistoricoDePagas } from '../componentes/HistoricoDePagas'
 import { MenuFlutuante, OpcaoDoMenu } from '../componentes/MenuFlutuante'
 import { Modal } from '../componentes/Modal'
 import { LINHA_TOCAVEL, VIDRO } from '../componentes/vidro'
@@ -297,6 +298,8 @@ export function Planejamento() {
               </ul>
             )}
           </section>
+
+          <HistoricoDePagas versao={recarga} />
         </>
       )}
 
