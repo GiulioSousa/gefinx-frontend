@@ -1,10 +1,12 @@
 import { clienteApi } from './clienteApi'
-import type { ContaDoPlanejamento, DespesaPaga, DespesaPlanejada, Pagina, Planejamento } from '../tipos'
+import type { ContaDoPlanejamento, DespesaPaga, DespesaPlanejada, Pagina, Planejamento, Recorrencia } from '../tipos'
 
 export interface DadosDespesaPlanejada {
   descricao: string
   valor: number
   prazo: string
+  /** Ausente ou nula: não se repete. */
+  recorrencia?: Recorrencia | null
 }
 
 export async function buscarPlanejamento(): Promise<Planejamento> {

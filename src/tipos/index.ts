@@ -76,12 +76,20 @@ export interface FiltroSaldo {
   dataFim?: string
 }
 
+/**
+ * De quanto em quanto tempo a despesa volta. Paga, a que se repete põe a próxima no plano, com o
+ * mesmo valor e o prazo uma semana ou um mês adiante.
+ */
+export type Recorrencia = 'SEMANAL' | 'MENSAL'
+
 /** Um pagamento que ainda vai acontecer. Não é transação, e não mexe no saldo. */
 export interface DespesaPlanejada {
   id: number
   descricao: string
   valor: number
   prazo: string
+  /** Nula na despesa que não se repete. */
+  recorrencia: Recorrencia | null
 }
 
 /**
