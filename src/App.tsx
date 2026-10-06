@@ -9,6 +9,7 @@ import { Transacoes } from './paginas/Transacoes'
 import { Categorias } from './paginas/Categorias'
 import { Contas } from './paginas/Contas'
 import { Planejamento } from './paginas/Planejamento'
+import { Relatorios } from './paginas/Relatorios'
 
 function App() {
   return (
@@ -63,6 +64,17 @@ function App() {
                 <RotaProtegida>
                   <Layout>
                     <Planejamento />
+                  </Layout>
+                </RotaProtegida>
+              }
+            />
+            {/* Sem aba própria: a barra do celular já tem cinco. Chega-se pelo Painel. */}
+            <Route
+              path="/relatorios"
+              element={
+                <RotaProtegida>
+                  <Layout>
+                    <Relatorios />
                   </Layout>
                 </RotaProtegida>
               }
