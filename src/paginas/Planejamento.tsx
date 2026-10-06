@@ -308,7 +308,7 @@ export function Planejamento() {
             )}
           </section>
 
-          <HistoricoDePagas versao={recarga} />
+          <HistoricoDePagas versao={recarga} aoDesfazer={recarregar} />
         </>
       )}
 

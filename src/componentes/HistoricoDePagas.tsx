@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import type { DespesaPaga } from '../tipos'
-import { listarDespesasPagas } from '../api/planejamentoApi'
+import type { DesfechoDaProxima, DespesaPaga } from '../tipos'
+import { desfazerPagamento, listarDespesasPagas } from '../api/planejamentoApi'
 import { extrairMensagemErro } from '../api/erros'
-import { VIDRO } from './vidro'
+import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
+import { LINHA_TOCAVEL, VIDRO } from './vidro'
 
 /** Poucas por vez: o histórico fica abaixo do plano, e quem abre quer ver as últimas. */
 const TAMANHO_DA_PAGINA = 10
@@ -30,20 +31,30 @@ function Diferenca({ despesa }: { despesa: DespesaPaga }) {
   )
 }
 
+/** O que dizer depois de desfazer, conforme o destino da próxima ocorrência. */
+const AVISO_DO_DESFECHO: Record<DesfechoDaProxima, string> = {
+  NENHUMA: 'Pagamento desfeito: a despesa voltou ao plano.',
+  REMOVIDA: 'Pagamento desfeito: a despesa voltou ao plano, e a próxima ocorrência saiu dele.',
+  MANTIDA: 'Pagamento desfeito: a despesa voltou ao plano. A próxima ocorrência continua lá, porque já tinha sido editada.',
+}
+
 /**
  * As despesas planejadas já pagas. Fechado por padrão, e só busca ao abrir: o plano é o que se
  * consulta todo dia, o histórico não.
  *
  * `versao` muda quando o plano muda — um pagamento novo, uma transação excluída —, e o
- * histórico aberto volta à primeira página para refletir isso.
+ * histórico aberto volta à primeira página para refletir isso. `aoDesfazer` avisa a tela de
+ * que o plano mudou daqui, e é ela quem incrementa a versão.
  */
-export function HistoricoDePagas({ versao }: { versao: number }) {
+export function HistoricoDePagas({ versao, aoDesfazer }: { versao: number; aoDesfazer: () => void }) {
   const [aberto, setAberto] = useState(false)
   const [pagas, setPagas] = useState<DespesaPaga[]>([])
   const [pagina, setPagina] = useState(0)
   const [totalPaginas, setTotalPaginas] = useState(0)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
+  const [aviso, setAviso] = useState('')
+  const [menu, setMenu] = useState<{ despesa: DespesaPaga; ancora: HTMLElement } | null>(null)
 
   useEffect(() => {
     if (!aberto) {
@@ -77,6 +88,26 @@ export function HistoricoDePagas({ versao }: { versao: number }) {
       cancelado = true
     }
   }, [aberto, versao])
+
+  async function desfazer(despesa: DespesaPaga) {
+    const pagamento =
+      despesa.valorPago !== null && despesa.dataPagamento !== null
+        ? ` A transação de ${formatarMoeda(despesa.valorPago)} em ${formatarData(despesa.dataPagamento)} será excluída.`
+        : ''
+    const proxima = despesa.recorrencia ? ' Se a próxima ocorrência ainda não foi editada, ela sai do plano.' : ''
+    if (!window.confirm(`Desfazer o pagamento de "${despesa.descricao}"?${pagamento} A despesa volta ao plano.${proxima}`)) {
+      return
+    }
+    setErro('')
+    setAviso('')
+    try {
+      const desfecho = await desfazerPagamento(despesa.id)
+      setAviso(AVISO_DO_DESFECHO[desfecho])
+      aoDesfazer()
+    } catch (excecao) {
+      setErro(extrairMensagemErro(excecao, 'Não foi possível desfazer o pagamento'))
+    }
+  }
 
   async function mostrarMais() {
     setCarregando(true)
@@ -123,6 +154,9 @@ export function HistoricoDePagas({ versao }: { versao: number }) {
       {aberto && (
         <div id="lista-pagas" className="space-y-3">
           {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
+          <p aria-live="polite" className="text-sm text-slate-600 empty:hidden dark:text-slate-300">
+            {aviso}
+          </p>
 
           {!erro && !carregando && pagas.length === 0 && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -133,36 +167,48 @@ export function HistoricoDePagas({ versao }: { versao: number }) {
           {pagas.length > 0 && (
             <ul className="space-y-3">
               {pagas.map((despesa) => (
-                <li key={despesa.id} className={`space-y-1 rounded-lg p-4 ${VIDRO}`}>
-                  <span className="flex items-start justify-between gap-3">
-                    <span className="font-medium text-slate-900 dark:text-slate-100">{despesa.descricao}</span>
-                    <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
-                      {formatarMoeda(despesa.valorPago ?? despesa.valorPlanejado)}
-                    </span>
-                  </span>
-
-                  {despesa.dataPagamento === null ? (
-                    <span className="block text-sm text-slate-500 dark:text-slate-400">
-                      Prazo {formatarData(despesa.prazo)}. O pagamento não foi encontrado.
-                    </span>
-                  ) : (
-                    <>
-                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                        paga em {formatarData(despesa.dataPagamento)}
-                        {despesa.pagaComAtraso && (
-                          <span className="rounded-full border border-current px-2 text-xs font-medium text-amber-700 dark:text-amber-300">
-                            Após o prazo, {formatarData(despesa.prazo)}
-                          </span>
-                        )}
+                <li key={despesa.id} className={`overflow-hidden rounded-lg ${VIDRO}`}>
+                  {/* O cartão inteiro abre o menu, como no plano e em Transações. */}
+                  <button
+                    type="button"
+                    onClick={(evento) => {
+                      const ancora = evento.currentTarget
+                      setMenu((atual) => (atual?.despesa.id === despesa.id ? null : { despesa, ancora }))
+                    }}
+                    aria-haspopup="true"
+                    aria-expanded={menu?.despesa.id === despesa.id}
+                    className={`${LINHA_TOCAVEL} block w-full space-y-1 p-4 text-left`}
+                  >
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="font-medium text-slate-900 dark:text-slate-100">{despesa.descricao}</span>
+                      <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
+                        {formatarMoeda(despesa.valorPago ?? despesa.valorPlanejado)}
                       </span>
-                      {/* Linha própria: emendadas à data, quebravam com o separador no começo da linha. */}
+                    </span>
+
+                    {despesa.dataPagamento === null ? (
                       <span className="block text-sm text-slate-500 dark:text-slate-400">
-                        {[despesa.conta, despesa.categoria].filter(Boolean).join(' · ')}
+                        Prazo {formatarData(despesa.prazo)}. O pagamento não foi encontrado.
                       </span>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+                          paga em {formatarData(despesa.dataPagamento)}
+                          {despesa.pagaComAtraso && (
+                            <span className="rounded-full border border-current px-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                              Após o prazo, {formatarData(despesa.prazo)}
+                            </span>
+                          )}
+                        </span>
+                        {/* Linha própria: emendadas à data, quebravam com o separador no começo da linha. */}
+                        <span className="block text-sm text-slate-500 dark:text-slate-400">
+                          {[despesa.conta, despesa.categoria].filter(Boolean).join(' · ')}
+                        </span>
+                      </>
+                    )}
 
-                  <Diferenca despesa={despesa} />
+                    <Diferenca despesa={despesa} />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -180,6 +226,19 @@ export function HistoricoDePagas({ versao }: { versao: number }) {
             </button>
           )}
         </div>
+      )}
+      {menu && (
+        <MenuFlutuante rotulo={`Ações da despesa paga ${menu.despesa.descricao}`} ancora={menu.ancora} aoFechar={() => setMenu(null)}>
+          <OpcaoDoMenu
+            perigosa
+            aoEscolher={() => {
+              setMenu(null)
+              desfazer(menu.despesa)
+            }}
+          >
+            Desfazer pagamento
+          </OpcaoDoMenu>
+        </MenuFlutuante>
       )}
     </section>
   )
