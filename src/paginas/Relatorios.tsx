@@ -230,6 +230,9 @@ function GraficoMensal({ meses, selecionado, aoSelecionar }: PropsDosMeses) {
           <div className="relative flex" onPointerLeave={() => setDestacado(null)}>
             {meses.map((mes, indice) => {
               const marcado = mes.mes === selecionado
+              // Com 12 meses abaixo de 360px os nomes se encostam: fica um sim, um não, contando
+              // do mais recente, que sempre aparece. O nome inteiro segue no aria-label e na tabela.
+              const rotuloAlternado = meses.length > 6 && (meses.length - 1 - indice) % 2 === 1
               return (
                 <button
                   key={mes.mes}
@@ -258,7 +261,7 @@ function GraficoMensal({ meses, selecionado, aoSelecionar }: PropsDosMeses) {
                     })}
                   </span>
                   <span
-                    className={`mt-1 text-[11px] ${
+                    className={`mt-1 text-[11px] ${rotuloAlternado ? 'max-[359px]:invisible' : ''} ${
                       marcado ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >

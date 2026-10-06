@@ -68,7 +68,6 @@ function App() {
                 </RotaProtegida>
               }
             />
-            {/* Sem aba própria: a barra do celular já tem cinco. Chega-se pelo Painel. */}
             <Route
               path="/relatorios"
               element={

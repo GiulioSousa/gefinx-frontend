@@ -24,7 +24,7 @@ const linkClasse = ({ isActive }: { isActive: boolean }) =>
 // Abaixo de 360px, 11px e letras mais juntas: com cinco abas num aparelho de 320, cada uma
 // fica com 55px, e "Transações" em 12px pede 60.
 const abaClasse = ({ isActive }: { isActive: boolean }) =>
-  `relative z-10 flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 text-xs transition-colors max-[359px]:text-[11px] max-[359px]:tracking-tight ${
+  `relative z-10 flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 text-[11px] tracking-tight transition-colors max-[359px]:text-[10px] max-[359px]:tracking-tighter ${
     isActive
       ? 'font-semibold text-emerald-700 dark:text-emerald-400'
       : 'font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
@@ -50,8 +50,10 @@ const TRILHO_DA_BOLHA =
 const BOLHA_DA_ABA = `h-full w-full max-w-24 rounded-full ${BOLHA}`
 
 // Os ícones seguem o traço do BotaoDeTema: 24×24, contorno de 2, pontas arredondadas.
-// `rotuloNaAba` é o nome na barra do celular, quando o de sempre não cabe: com cinco abas, cada
-// uma tem uns 64px, e "Planejamento" pede 75 — alargaria a sua aba e tiraria a bolha do lugar.
+// `rotuloNaAba` é o nome na barra do celular, quando o de sempre não cabe: com seis abas, cada
+// uma tem 55px em 375 e 46px em 320, e "Planejamento" não caberia em nenhuma — alargaria a sua
+// aba e tiraria a bolha do lugar. Por isso também o rótulo é 11px, e 10px mais apertado abaixo de
+// 360: medido, "Transações", o mais largo, ocupa 51 de 55px em 375 e 44 de 46px em 320.
 const ROTAS: { para: string; rotulo: string; rotuloNaAba?: string; exata: boolean; icone: ReactNode }[] = [
   {
     para: '/',
@@ -88,6 +90,18 @@ const ROTAS: { para: string; rotulo: string; rotuloNaAba?: string; exata: boolea
         <line x1="16" y1="2" x2="16" y2="6" />
         <line x1="8" y1="2" x2="8" y2="6" />
         <line x1="3" y1="10" x2="21" y2="10" />
+      </>
+    ),
+  },
+  {
+    para: '/relatorios',
+    rotulo: 'Relatórios',
+    exata: false,
+    icone: (
+      <>
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
       </>
     ),
   },

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { buscarSaldo, criarTransacao, listarTransacoes } from '../api/transacoesApi'
 import type { DadosTransacao } from '../api/transacoesApi'
 import { listarCategorias } from '../api/categoriasApi'
@@ -176,17 +175,9 @@ export function Painel() {
       {/* Tudo o que o seletor alcança mora dentro desta seção, e nada que ele não alcance. */}
       <section aria-labelledby="titulo-movimentacao" className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-baseline justify-between gap-3 sm:block">
-            <h2 id="titulo-movimentacao" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Movimentação
-            </h2>
-            <Link
-              to="/relatorios"
-              className="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
-            >
-              Relatório mensal
-            </Link>
-          </div>
+          <h2 id="titulo-movimentacao" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Movimentação
+          </h2>
           <SeletorDePeriodo periodo={periodo} aoMudar={escolherPeriodo} />
         </div>
 
