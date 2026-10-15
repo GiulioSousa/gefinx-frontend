@@ -25,7 +25,7 @@ const linkClasse = ({ isActive }: { isActive: boolean }) =>
 // Abaixo de 360px, 11px e letras mais juntas: com cinco abas num aparelho de 320, cada uma
 // fica com 55px, e "Transações" em 12px pede 60.
 const abaClasse = ({ isActive }: { isActive: boolean }) =>
-  `relative z-10 flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 text-[11px] tracking-tight transition-colors max-[359px]:text-[10px] max-[359px]:tracking-tighter ${
+  `relative z-10 flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 text-xs transition-colors max-[359px]:text-[11px] max-[359px]:tracking-tight ${
     isActive
       ? 'font-semibold text-emerald-700 dark:text-emerald-400'
       : 'font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
@@ -51,10 +51,8 @@ const TRILHO_DA_BOLHA =
 const BOLHA_DA_ABA = `h-full w-full max-w-24 rounded-full ${BOLHA}`
 
 // Os ícones seguem o traço do BotaoDeTema: 24×24, contorno de 2, pontas arredondadas.
-// `rotuloNaAba` é o nome na barra do celular, quando o de sempre não cabe: com seis abas, cada
-// uma tem 55px em 375 e 46px em 320, e "Planejamento" não caberia em nenhuma — alargaria a sua
-// aba e tiraria a bolha do lugar. Por isso também o rótulo é 11px, e 10px mais apertado abaixo de
-// 360: medido, "Transações", o mais largo, ocupa 51 de 55px em 375 e 44 de 46px em 320.
+// `rotuloNaAba` é o nome na barra do celular, quando o de sempre não cabe: com cinco abas, cada
+// uma tem uns 64px, e "Planejamento" pede 75 — alargaria a sua aba e tiraria a bolha do lugar.
 const ROTAS: { para: string; rotulo: string; rotuloNaAba?: string; exata: boolean; icone: ReactNode }[] = [
   {
     para: '/',
@@ -114,17 +112,6 @@ const ROTAS: { para: string; rotulo: string; rotuloNaAba?: string; exata: boolea
       <>
         <rect x="2" y="5" width="20" height="14" rx="2" />
         <line x1="2" y1="10" x2="22" y2="10" />
-      </>
-    ),
-  },
-  {
-    para: '/categorias',
-    rotulo: 'Categorias',
-    exata: false,
-    icone: (
-      <>
-        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-        <line x1="7" y1="7" x2="7.01" y2="7" />
       </>
     ),
   },

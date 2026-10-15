@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { Categoria, TipoCategoria } from '../tipos'
 import * as categoriasApi from '../api/categoriasApi'
@@ -88,6 +89,26 @@ export function Categorias() {
 
   return (
     <div className="space-y-6">
+      {/* A volta para Transações, de onde se chega: fora da nav bar, sem ela não haveria
+          caminho de volta à vista no celular além do voltar do aparelho. */}
+      <Link
+        to="/transacoes"
+        className="-mb-4 -ml-2 inline-flex items-center gap-1 rounded-md p-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+      >
+        <svg
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Transações
+      </Link>
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Categorias</h1>
         {!mostrarFormulario && (

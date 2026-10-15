@@ -40,8 +40,10 @@ function App() {
                   </RotaProtegida>
                 }
               />
+              {/* Dentro de Transações, onde se usa: a nav bar ficou só com os lugares de todo dia. */}
+              <Route path="/categorias" element={<Navigate to="/transacoes/categorias" replace />} />
               <Route
-                path="/categorias"
+                path="/transacoes/categorias"
                 element={
                   <RotaProtegida>
                     <Layout>

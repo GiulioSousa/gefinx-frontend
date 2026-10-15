@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { Categoria, Conta, FiltroTransacoes, Transacao } from '../tipos'
 import { listarCategorias } from '../api/categoriasApi'
@@ -203,43 +204,68 @@ export function Transacoes() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Transações</h1>
 
-        {/*
-          Com os filtros escondidos num modal, a lista filtrada pareceria a lista inteira. O
-          número sobre o ícone é o que avisa que há um recorte — e quantos. Fundo verde 700,
-          e não 600: branco sobre o 600 fica abaixo de AA (ver PALETA.md).
-        */}
-        <button
-          type="button"
-          onClick={() => setMostrarFiltro(true)}
-          title={rotuloDoFiltro}
-          aria-label={rotuloDoFiltro}
-          className={`relative rounded-md p-2 ${
-            temFiltro
-              ? 'text-emerald-700 dark:text-emerald-400'
-              : 'text-slate-600 dark:text-slate-300'
-          } hover:bg-slate-100 dark:hover:bg-slate-800`}
-        >
-          <svg
-            className="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+        <div className="flex items-center gap-1">
+          {/* As categorias moram aqui, e não numa aba: são o cadastro de que as transações
+              dependem, visitado de vez em quando. Com o nome escrito, como o botão Contas do
+              Planejamento — só o ícone de etiqueta não diria para onde leva. */}
+          <Link
+            to="/transacoes/categorias"
+            className="flex items-center gap-2 rounded-md p-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          {temFiltro && (
-            <span
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               aria-hidden="true"
-              className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-700 px-1 text-[11px] leading-none font-semibold text-white"
             >
-              {quantidadeDeFiltros}
-            </span>
-          )}
-        </button>
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+            Categorias
+          </Link>
+
+          {/*
+            Com os filtros escondidos num modal, a lista filtrada pareceria a lista inteira. O
+            número sobre o ícone é o que avisa que há um recorte — e quantos. Fundo verde 700,
+            e não 600: branco sobre o 600 fica abaixo de AA (ver PALETA.md).
+          */}
+          <button
+            type="button"
+            onClick={() => setMostrarFiltro(true)}
+            title={rotuloDoFiltro}
+            aria-label={rotuloDoFiltro}
+            className={`relative rounded-md p-2 ${
+              temFiltro
+                ? 'text-emerald-700 dark:text-emerald-400'
+                : 'text-slate-600 dark:text-slate-300'
+            } hover:bg-slate-100 dark:hover:bg-slate-800`}
+          >
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            {temFiltro && (
+              <span
+                aria-hidden="true"
+                className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-700 px-1 text-[11px] leading-none font-semibold text-white"
+              >
+                {quantidadeDeFiltros}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       <SeletorDePeriodo
