@@ -31,8 +31,9 @@ export async function atualizarDespesaPlanejada(
   return data
 }
 
-export async function excluirDespesaPlanejada(id: number): Promise<void> {
-  await clienteApi.delete(`/despesas-planejadas/${id}`)
+/** Na recorrente, `serie` tira todas as pendentes da série; sem ele, só esta ocorrência. */
+export async function excluirDespesaPlanejada(id: number, serie = false): Promise<void> {
+  await clienteApi.delete(`/despesas-planejadas/${id}`, { params: serie ? { serie: true } : undefined })
 }
 
 /** A transação que paga a despesa. O tipo é sempre despesa, e por isso não vai no corpo. */

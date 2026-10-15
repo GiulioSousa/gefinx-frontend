@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useConfirmacao } from '../contextos/ContextoConfirmacao'
+import { useConfirmacao, useEscolha } from '../contextos/ContextoConfirmacao'
 import type { Categoria, Conta, ContaDoPlanejamento, ItemDoPlanejamento, Planejamento as Plano, Recorrencia, SituacaoDaDespesa } from '../tipos'
 import * as planejamentoApi from '../api/planejamentoApi'
 import type { DadosDespesaPlanejada, DadosPagamento } from '../api/planejamentoApi'
@@ -99,6 +99,7 @@ export function Planejamento() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const confirmar = useConfirmacao()
+  const escolher = useEscolha()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [despesaEmEdicao, setDespesaEmEdicao] = useState<ItemDoPlanejamento | undefined>(undefined)
   const [mostrarContas, setMostrarContas] = useState(false)
@@ -165,15 +166,38 @@ export function Planejamento() {
   }
 
   async function excluir(item: ItemDoPlanejamento) {
-    // Na recorrente, sai só esta ocorrência: a série segue, e se esta era a última, a seguinte
-    // entra no plano no lugar dela.
-    const aviso = item.recorrencia ? ' Sai só esta ocorrência: a série continua, e as outras seguem no plano.' : ''
-    if (!(await confirmar({ titulo: 'Excluir despesa', mensagem: `Excluir "${item.descricao}" do planejamento?${aviso}`, confirmar: 'Excluir', perigosa: true }))) {
+    const mensagem = `Excluir "${item.descricao}" do planejamento?`
+    let serie = false
+    if (item.recorrencia) {
+      // A que menos apaga vem marcada: só esta, e a série segue.
+      const escolha = await escolher({
+        titulo: 'Excluir despesa',
+        mensagem: `${mensagem} Ela se repete ${REPETICAO[item.recorrencia]}.`,
+        confirmar: 'Excluir',
+        perigosa: true,
+        opcoes: [
+          {
+            valor: 'ESTA',
+            rotulo: 'Somente esta ocorrência',
+            descricao: 'A série continua: as outras ocorrências seguem no plano.',
+          },
+          {
+            valor: 'SERIE',
+            rotulo: 'Todas as ocorrências pendentes',
+            descricao: 'A série acaba. As já pagas continuam no histórico.',
+          },
+        ],
+      })
+      if (escolha === null) {
+        return
+      }
+      serie = escolha === 'SERIE'
+    } else if (!(await confirmar({ titulo: 'Excluir despesa', mensagem, confirmar: 'Excluir', perigosa: true }))) {
       return
     }
     setErro('')
     try {
-      await planejamentoApi.excluirDespesaPlanejada(item.id)
+      await planejamentoApi.excluirDespesaPlanejada(item.id, serie)
       recarregar()
     } catch (excecao) {
       setErro(extrairMensagemErro(excecao, 'Não foi possível excluir a despesa'))
