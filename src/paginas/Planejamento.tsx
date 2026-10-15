@@ -147,11 +147,11 @@ export function Planejamento() {
     setMenu((atual) => (atual?.item.id === item.id ? null : { item, ancora }))
   }
 
-  async function salvar(dados: DadosDespesaPlanejada) {
+  async function salvar(dados: DadosDespesaPlanejada, serie: boolean) {
     setErro('')
     try {
       if (despesaEmEdicao) {
-        await planejamentoApi.atualizarDespesaPlanejada(despesaEmEdicao.id, dados)
+        await planejamentoApi.atualizarDespesaPlanejada(despesaEmEdicao.id, dados, serie)
       } else {
         await planejamentoApi.criarDespesaPlanejada(dados)
       }

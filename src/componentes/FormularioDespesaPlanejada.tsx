@@ -16,7 +16,8 @@ const REPETICOES: { valor: Recorrencia | null; rotulo: string }[] = [
 
 interface FormularioDespesaPlanejadaProps {
   despesaInicial?: DespesaPlanejada
-  aoSalvar: (dados: DadosDespesaPlanejada) => Promise<void>
+  /** `serie`: a edição vale também para as outras pendentes da série. Só na edição de uma recorrente. */
+  aoSalvar: (dados: DadosDespesaPlanejada, serie: boolean) => Promise<void>
   aoCancelar: () => void
 }
 
@@ -29,6 +30,9 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
   const [centavos, setCentavos] = useState(despesaInicial ? Math.round(despesaInicial.valor * 100) : 0)
   const [prazo, setPrazo] = useState(despesaInicial?.prazo ?? '')
   const [recorrencia, setRecorrencia] = useState<Recorrencia | null>(despesaInicial?.recorrencia ?? null)
+  // A que menos muda vem marcada: só esta ocorrência.
+  const [naSerie, setNaSerie] = useState(false)
+  const editandoSerie = Boolean(despesaInicial?.recorrencia)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
@@ -41,7 +45,7 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
     setErrosPorCampo({})
     setSalvando(true)
     try {
-      await aoSalvar({ descricao, valor: centavos / 100, prazo, recorrencia })
+      await aoSalvar({ descricao, valor: centavos / 100, prazo, recorrencia }, editandoSerie && naSerie)
     } catch (excecao) {
       const falha = ErroDeFormulario.de(excecao, 'Não foi possível salvar a despesa')
       setErro(falha.message)
@@ -111,6 +115,43 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
           </div>
           <ErroDeCampo mensagem={errosPorCampo.recorrencia} />
         </fieldset>
+
+        {editandoSerie && (
+          <fieldset className="sm:col-span-2">
+            <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Aplicar a</legend>
+            <div className="space-y-2">
+              {[
+                { valor: false, rotulo: 'Somente esta ocorrência', descricao: 'As outras ocorrências ficam como estão.' },
+                {
+                  valor: true,
+                  rotulo: 'Todas as ocorrências pendentes',
+                  descricao:
+                    despesaInicial?.recorrencia === 'MENSAL'
+                      ? 'Se o prazo mudar, as outras passam para o mesmo dia do mês. As pagas não mudam.'
+                      : 'Se o prazo mudar, as outras andam os mesmos dias. As pagas não mudam.',
+                },
+              ].map((opcao) => (
+                <label
+                  key={String(opcao.valor)}
+                  className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-300 p-3 has-checked:border-emerald-600 dark:border-slate-700 dark:has-checked:border-emerald-400"
+                >
+                  <input
+                    type="radio"
+                    name="aplicar"
+                    value={opcao.valor ? 'SERIE' : 'ESTA'}
+                    checked={naSerie === opcao.valor}
+                    onChange={() => setNaSerie(opcao.valor)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600 dark:accent-emerald-400"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-slate-900 dark:text-slate-100">{opcao.rotulo}</span>
+                    <span className="block text-sm text-slate-600 dark:text-slate-300">{opcao.descricao}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
       </div>
 
       {recorrencia && (

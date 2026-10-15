@@ -19,8 +19,15 @@ export async function criarDespesaPlanejada(dados: DadosDespesaPlanejada): Promi
   return data
 }
 
-export async function atualizarDespesaPlanejada(id: number, dados: DadosDespesaPlanejada): Promise<DespesaPlanejada> {
-  const { data } = await clienteApi.put<DespesaPlanejada>(`/despesas-planejadas/${id}`, dados)
+/** Na recorrente, `serie` leva a mudança às outras pendentes da série; sem ele, só a esta ocorrência. */
+export async function atualizarDespesaPlanejada(
+  id: number,
+  dados: DadosDespesaPlanejada,
+  serie = false,
+): Promise<DespesaPlanejada> {
+  const { data } = await clienteApi.put<DespesaPlanejada>(`/despesas-planejadas/${id}`, dados, {
+    params: serie ? { serie: true } : undefined,
+  })
   return data
 }
 
