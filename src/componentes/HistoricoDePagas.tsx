@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { DesfechoDaProxima, DespesaPaga } from '../tipos'
+import type { DesfechoDaProxima, DespesaPaga, Recorrencia } from '../tipos'
 import { desfazerPagamento, listarDespesasPagas } from '../api/planejamentoApi'
 import { extrairMensagemErro } from '../api/erros'
 import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
@@ -15,6 +15,26 @@ function formatarMoeda(valor: number): string {
 /** Com o ano: ao contrário dos prazos do plano, o histórico atravessa anos. */
 function formatarData(data: string): string {
   return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR')
+}
+
+/** Quantos dias à frente o plano mostra de cada série — o mesmo número do servidor. */
+const DIAS_DO_PLANO = 30
+
+/** Em UTC, para a conta de dias não tropeçar no horário de verão. */
+function somarDias(data: string, dias: number): string {
+  const dia = new Date(`${data}T00:00:00Z`)
+  dia.setUTCDate(dia.getUTCDate() + dias)
+  return dia.toISOString().slice(0, 10)
+}
+
+/** O prazo da ocorrência seguinte; a mensal cai no último dia do mês que não tem o dia dela. */
+function proximoPrazo(prazo: string, recorrencia: Recorrencia): string {
+  if (recorrencia === 'SEMANAL') {
+    return somarDias(prazo, 7)
+  }
+  const [ano, mes, dia] = prazo.split('-').map(Number)
+  const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(ano, mes, Math.min(dia, ultimoDia))).toISOString().slice(0, 10)
 }
 
 /** A diferença entre o pago e o planejado, só quando houve. */
@@ -36,7 +56,7 @@ const AVISO_DO_DESFECHO: Record<DesfechoDaProxima, string> = {
   NENHUMA: 'Pagamento desfeito: a despesa voltou ao plano.',
   REMOVIDA: 'Pagamento desfeito: a despesa voltou ao plano, e a próxima ocorrência saiu dele.',
   MANTIDA: 'Pagamento desfeito: a despesa voltou ao plano. A próxima ocorrência continua lá, porque já tinha sido editada.',
-  MANTIDA_PELO_ATRASO: 'Pagamento desfeito: a despesa voltou ao plano, atrasada. A próxima ocorrência continua lá.',
+  MANTIDA_NO_PERIODO: 'Pagamento desfeito: a despesa voltou ao plano. A próxima ocorrência continua lá, porque vence nos próximos 30 dias.',
 }
 
 /**
@@ -96,11 +116,12 @@ export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number;
       despesa.valorPago !== null && despesa.dataPagamento !== null
         ? ` A transação de ${formatarMoeda(despesa.valorPago)} em ${formatarData(despesa.dataPagamento)} será excluída.`
         : ''
-    // Atrasada, ela teria a próxima no plano de qualquer jeito, e o servidor a mantém.
+    // Com a próxima dentro dos dias que o plano mostra, o servidor a mantém: ela estaria lá de
+    // qualquer jeito.
     const proxima = !despesa.recorrencia
       ? ''
-      : despesa.prazo < hoje
-        ? ' Ela volta atrasada, e a próxima ocorrência continua no plano.'
+      : proximoPrazo(despesa.prazo, despesa.recorrencia) <= somarDias(hoje, DIAS_DO_PLANO)
+        ? ' A próxima ocorrência continua no plano, que mostra os próximos 30 dias.'
         : ' Se a próxima ocorrência ainda não foi editada, ela sai do plano.'
     if (!window.confirm(`Desfazer o pagamento de "${despesa.descricao}"?${pagamento} A despesa volta ao plano.${proxima}`)) {
       return
