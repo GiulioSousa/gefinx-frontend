@@ -36,6 +36,7 @@ const AVISO_DO_DESFECHO: Record<DesfechoDaProxima, string> = {
   NENHUMA: 'Pagamento desfeito: a despesa voltou ao plano.',
   REMOVIDA: 'Pagamento desfeito: a despesa voltou ao plano, e a próxima ocorrência saiu dele.',
   MANTIDA: 'Pagamento desfeito: a despesa voltou ao plano. A próxima ocorrência continua lá, porque já tinha sido editada.',
+  MANTIDA_PELO_ATRASO: 'Pagamento desfeito: a despesa voltou ao plano, atrasada. A próxima ocorrência continua lá.',
 }
 
 /**
@@ -44,9 +45,10 @@ const AVISO_DO_DESFECHO: Record<DesfechoDaProxima, string> = {
  *
  * `versao` muda quando o plano muda — um pagamento novo, uma transação excluída —, e o
  * histórico aberto volta à primeira página para refletir isso. `aoDesfazer` avisa a tela de
- * que o plano mudou daqui, e é ela quem incrementa a versão.
+ * que o plano mudou daqui, e é ela quem incrementa a versão. `hoje` é o dia do plano, vindo do
+ * servidor: é por ele que se sabe se a despesa volta atrasada.
  */
-export function HistoricoDePagas({ versao, aoDesfazer }: { versao: number; aoDesfazer: () => void }) {
+export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number; hoje: string; aoDesfazer: () => void }) {
   const [aberto, setAberto] = useState(false)
   const [pagas, setPagas] = useState<DespesaPaga[]>([])
   const [pagina, setPagina] = useState(0)
@@ -94,7 +96,12 @@ export function HistoricoDePagas({ versao, aoDesfazer }: { versao: number; aoDes
       despesa.valorPago !== null && despesa.dataPagamento !== null
         ? ` A transação de ${formatarMoeda(despesa.valorPago)} em ${formatarData(despesa.dataPagamento)} será excluída.`
         : ''
-    const proxima = despesa.recorrencia ? ' Se a próxima ocorrência ainda não foi editada, ela sai do plano.' : ''
+    // Atrasada, ela teria a próxima no plano de qualquer jeito, e o servidor a mantém.
+    const proxima = !despesa.recorrencia
+      ? ''
+      : despesa.prazo < hoje
+        ? ' Ela volta atrasada, e a próxima ocorrência continua no plano.'
+        : ' Se a próxima ocorrência ainda não foi editada, ela sai do plano.'
     if (!window.confirm(`Desfazer o pagamento de "${despesa.descricao}"?${pagamento} A despesa volta ao plano.${proxima}`)) {
       return
     }

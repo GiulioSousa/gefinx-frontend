@@ -163,8 +163,13 @@ export function Planejamento() {
   }
 
   async function excluir(item: ItemDoPlanejamento) {
-    // Excluir a ocorrência pendente encerra a série: a próxima só nasce quando esta é paga.
-    const aviso = item.recorrencia ? ' Ela se repete, e as próximas deixam de entrar no plano.' : ''
+    // Excluir a última ocorrência encerra a série. A atrasada já tem a próxima no plano, e a
+    // série segue por ela.
+    const aviso = !item.recorrencia
+      ? ''
+      : item.situacao === 'ATRASADA'
+        ? ' A próxima ocorrência continua no plano.'
+        : ' Ela se repete, e as próximas deixam de entrar no plano.'
     if (!window.confirm(`Excluir "${item.descricao}" do planejamento?${aviso}`)) {
       return
     }
@@ -308,7 +313,7 @@ export function Planejamento() {
             )}
           </section>
 
-          <HistoricoDePagas versao={recarga} aoDesfazer={recarregar} />
+          <HistoricoDePagas versao={recarga} hoje={plano.hoje} aoDesfazer={recarregar} />
         </>
       )}
 

@@ -156,7 +156,7 @@ export interface DespesaPaga {
  * O que houve com a próxima ocorrência ao desfazer um pagamento: não havia (`NENHUMA`), saiu do
  * plano por estar como nasceu (`REMOVIDA`), ou ficou por já ter sido editada (`MANTIDA`).
  */
-export type DesfechoDaProxima = 'NENHUMA' | 'REMOVIDA' | 'MANTIDA'
+export type DesfechoDaProxima = 'NENHUMA' | 'REMOVIDA' | 'MANTIDA' | 'MANTIDA_PELO_ATRASO'
 
 export interface ContaDoPlanejamento {
   id: number
