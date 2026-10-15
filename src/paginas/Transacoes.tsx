@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { Categoria, Conta, FiltroTransacoes, Transacao } from '../tipos'
 import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
@@ -28,6 +29,7 @@ export function Transacoes() {
   const [contas, setContas] = useState<Conta[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const confirmar = useConfirmacao()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [transacaoEmEdicao, setTransacaoEmEdicao] = useState<Transacao | undefined>(undefined)
   const [mostrarFiltro, setMostrarFiltro] = useState(false)
@@ -171,7 +173,7 @@ export function Transacoes() {
   }
 
   async function excluir(id: number) {
-    if (!window.confirm('Excluir esta transação?')) {
+    if (!(await confirmar({ titulo: 'Excluir transação', mensagem: 'Excluir esta transação? Isso não pode ser desfeito.', confirmar: 'Excluir', perigosa: true }))) {
       return
     }
     try {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { Categoria, Conta, ContaDoPlanejamento, ItemDoPlanejamento, Planejamento as Plano, Recorrencia, SituacaoDaDespesa } from '../tipos'
 import * as planejamentoApi from '../api/planejamentoApi'
 import type { DadosDespesaPlanejada, DadosPagamento } from '../api/planejamentoApi'
@@ -97,6 +98,7 @@ export function Planejamento() {
   const [contas, setContas] = useState<ContaDoPlanejamento[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const confirmar = useConfirmacao()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [despesaEmEdicao, setDespesaEmEdicao] = useState<ItemDoPlanejamento | undefined>(undefined)
   const [mostrarContas, setMostrarContas] = useState(false)
@@ -166,7 +168,7 @@ export function Planejamento() {
     // Na recorrente, sai só esta ocorrência: a série segue, e se esta era a última, a seguinte
     // entra no plano no lugar dela.
     const aviso = item.recorrencia ? ' Sai só esta ocorrência: a série continua, e as outras seguem no plano.' : ''
-    if (!window.confirm(`Excluir "${item.descricao}" do planejamento?${aviso}`)) {
+    if (!(await confirmar({ titulo: 'Excluir despesa', mensagem: `Excluir "${item.descricao}" do planejamento?${aviso}`, confirmar: 'Excluir', perigosa: true }))) {
       return
     }
     setErro('')

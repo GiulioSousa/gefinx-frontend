@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { DesfechoDaProxima, DespesaPaga, Recorrencia } from '../tipos'
 import { desfazerPagamento, listarDespesasPagas } from '../api/planejamentoApi'
 import { extrairMensagemErro } from '../api/erros'
@@ -75,6 +76,7 @@ export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number;
   const [totalPaginas, setTotalPaginas] = useState(0)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
+  const confirmar = useConfirmacao()
   const [aviso, setAviso] = useState('')
   const [menu, setMenu] = useState<{ despesa: DespesaPaga; ancora: HTMLElement } | null>(null)
 
@@ -123,7 +125,8 @@ export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number;
       : proximoPrazo(despesa.prazo, despesa.recorrencia) <= somarDias(hoje, DIAS_DO_PLANO)
         ? ' A próxima ocorrência continua no plano, que mostra os próximos 30 dias.'
         : ' Se a próxima ocorrência ainda não foi editada, ela sai do plano.'
-    if (!window.confirm(`Desfazer o pagamento de "${despesa.descricao}"?${pagamento} A despesa volta ao plano.${proxima}`)) {
+    const mensagem = `Desfazer o pagamento de "${despesa.descricao}"?${pagamento} A despesa volta ao plano.${proxima}`
+    if (!(await confirmar({ titulo: 'Desfazer pagamento', mensagem, confirmar: 'Desfazer', perigosa: true }))) {
       return
     }
     setErro('')

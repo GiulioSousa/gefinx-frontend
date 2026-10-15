@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { Categoria, TipoCategoria } from '../tipos'
 import * as categoriasApi from '../api/categoriasApi'
 import { FormularioCategoria } from '../componentes/FormularioCategoria'
@@ -10,6 +11,7 @@ export function Categorias() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const confirmar = useConfirmacao()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [categoriaEmEdicao, setCategoriaEmEdicao] = useState<Categoria | undefined>(undefined)
   const [menu, setMenu] = useState<{ categoria: Categoria; ancora: HTMLElement } | null>(null)
@@ -60,7 +62,7 @@ export function Categorias() {
   }
 
   async function excluir(id: number) {
-    if (!window.confirm('Excluir esta categoria?')) {
+    if (!(await confirmar({ titulo: 'Excluir categoria', mensagem: 'Excluir esta categoria? Isso não pode ser desfeito.', confirmar: 'Excluir', perigosa: true }))) {
       return
     }
     try {

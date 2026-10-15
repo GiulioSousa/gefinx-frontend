@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { Conta } from '../tipos'
 import * as contasApi from '../api/contasApi'
 import type { DadosConta } from '../api/contasApi'
@@ -15,6 +16,7 @@ export function Contas() {
   const [contas, setContas] = useState<Conta[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const confirmar = useConfirmacao()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [contaEmEdicao, setContaEmEdicao] = useState<Conta | undefined>(undefined)
   const [menu, setMenu] = useState<{ conta: Conta; ancora: HTMLElement } | null>(null)
@@ -64,7 +66,7 @@ export function Contas() {
   }
 
   async function excluir(id: number) {
-    if (!window.confirm('Excluir esta conta?')) {
+    if (!(await confirmar({ titulo: 'Excluir conta', mensagem: 'Excluir esta conta? Isso não pode ser desfeito.', confirmar: 'Excluir', perigosa: true }))) {
       return
     }
     setErro('')

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { encerrarTodasAsSessoes } from '../api/sessoesApi'
 import { extrairMensagemErro } from '../api/erros'
@@ -135,6 +136,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const [encerrando, setEncerrando] = useState(false)
   const [erro, setErro] = useState('')
+  const confirmar = useConfirmacao()
   // O botão que abriu o menu da conta, ou `null` com ele fechado. O menu precisa do
   // elemento, e não só de um "aberto": é embaixo dele que aparece.
   const [ancoraDaConta, setAncoraDaConta] = useState<HTMLElement | null>(null)
@@ -152,9 +154,12 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   async function aoEncerrarTodas() {
-    const confirmado = window.confirm(
-      'Isto vai desconectar você de todos os aparelhos, inclusive deste. Continuar?',
-    )
+    const confirmado = await confirmar({
+      titulo: 'Sair de todos',
+      mensagem: 'Isto vai desconectar você de todos os aparelhos, inclusive deste. Continuar?',
+      confirmar: 'Sair de todos',
+      perigosa: true,
+    })
     if (!confirmado) {
       return
     }
