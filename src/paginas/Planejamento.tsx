@@ -163,13 +163,9 @@ export function Planejamento() {
   }
 
   async function excluir(item: ItemDoPlanejamento) {
-    // Excluir a última ocorrência encerra a série. A atrasada já tem a próxima no plano, e a
-    // série segue por ela.
-    const aviso = !item.recorrencia
-      ? ''
-      : item.situacao === 'ATRASADA'
-        ? ' A próxima ocorrência continua no plano.'
-        : ' Ela se repete, e as próximas deixam de entrar no plano.'
+    // Na recorrente, sai só esta ocorrência: a série segue, e se esta era a última, a seguinte
+    // entra no plano no lugar dela.
+    const aviso = item.recorrencia ? ' Sai só esta ocorrência: a série continua, e as outras seguem no plano.' : ''
     if (!window.confirm(`Excluir "${item.descricao}" do planejamento?${aviso}`)) {
       return
     }
