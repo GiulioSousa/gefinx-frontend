@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as autenticacaoApi from '../api/autenticacaoApi'
+import * as contaApi from '../api/contaApi'
 import { registrarTratamentoDeSessaoExpirada } from '../api/clienteApi'
 
 interface ContextoAutenticacaoValor {
@@ -8,6 +9,8 @@ interface ContextoAutenticacaoValor {
   carregando: boolean
   sessaoExpirada: boolean
   entrar: (usuario: string, senha: string) => Promise<void>
+  /** Troca a senha e guarda o token novo: o servidor encerrou todas as sessões, inclusive esta. */
+  trocarSenha: (senhaAtual: string, novaSenha: string) => Promise<void>
   sair: () => void
 }
 
@@ -58,6 +61,11 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
     setSessaoExpirada(false)
   }
 
+  async function trocarSenha(senhaAtual: string, novaSenha: string) {
+    const resposta = await contaApi.trocarSenha(senhaAtual, novaSenha)
+    localStorage.setItem('token', resposta.token)
+  }
+
   function sair() {
     limparArmazenamento()
     setUsuario(null)
@@ -65,7 +73,7 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ContextoAutenticacao.Provider value={{ usuario, carregando, sessaoExpirada, entrar, sair }}>
+    <ContextoAutenticacao.Provider value={{ usuario, carregando, sessaoExpirada, entrar, trocarSenha, sair }}>
       {children}
     </ContextoAutenticacao.Provider>
   )

@@ -5,6 +5,8 @@ import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { encerrarTodasAsSessoes } from '../api/sessoesApi'
 import { extrairMensagemErro } from '../api/erros'
 import { BotaoDeTema } from './BotaoDeTema'
+import { FormularioTrocaDeSenha } from './FormularioTrocaDeSenha'
+import { Modal } from './Modal'
 import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
 import { BOLHA, VIDRO } from './vidro'
 
@@ -123,6 +125,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const [encerrando, setEncerrando] = useState(false)
   const [erro, setErro] = useState('')
+  const [trocandoSenha, setTrocandoSenha] = useState(false)
   const confirmar = useConfirmacao()
   // O botão que abriu o menu da conta, ou `null` com ele fechado. O menu precisa do
   // elemento, e não só de um "aberto": é embaixo dele que aparece.
@@ -239,6 +242,18 @@ export function Layout({ children }: { children: ReactNode }) {
               <BotaoDeTema comRotulo />
               {/* Com ícone, como o tema acima: sem ele o texto das duas começaria mais à
                   esquerda que o da opção de cima. */}
+              <OpcaoDoMenu
+                aoEscolher={() => {
+                  setAncoraDaConta(null)
+                  setTrocandoSenha(true)
+                }}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Alterar senha
+              </OpcaoDoMenu>
               <OpcaoDoMenu aoEscolher={aoEncerrarTodas}>
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
@@ -260,6 +275,12 @@ export function Layout({ children }: { children: ReactNode }) {
       </header>
       {erro && (
         <p className="mx-auto max-w-5xl px-4 pt-3 text-sm text-red-600 dark:text-red-400">{erro}</p>
+      )}
+      {/* Tocar fora não fecha: as senhas digitadas se perderiam num toque acidental. */}
+      {trocandoSenha && (
+        <Modal titulo="Alterar senha" aoFechar={() => setTrocandoSenha(false)} fecharAoTocarFora={false}>
+          <FormularioTrocaDeSenha aoFechar={() => setTrocandoSenha(false)} />
+        </Modal>
       )}
       {/* O `pb-24` no celular reserva o espaço da barra fixa: sem ele, o último cartão da
           lista ficaria para sempre por baixo das abas, sem rolagem que o alcançasse. */}
