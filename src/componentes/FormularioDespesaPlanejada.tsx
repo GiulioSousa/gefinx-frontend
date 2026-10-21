@@ -8,6 +8,14 @@ import { ErroDeCampo } from './ErroDeCampo'
 const CAMPO =
   'w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none'
 
+const CAMPO_DE_NUMERO =
+  'w-20 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none'
+
+/** Vazio é nulo: as parcelas são opcionais. */
+function numeroOuNulo(texto: string): number | null {
+  return texto.trim() === '' ? null : Number(texto)
+}
+
 const REPETICOES: { valor: Recorrencia | null; rotulo: string }[] = [
   { valor: null, rotulo: 'Não repete' },
   { valor: 'SEMANAL', rotulo: 'Toda semana' },
@@ -30,6 +38,8 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
   const [centavos, setCentavos] = useState(despesaInicial ? Math.round(despesaInicial.valor * 100) : 0)
   const [prazo, setPrazo] = useState(despesaInicial?.prazo ?? '')
   const [recorrencia, setRecorrencia] = useState<Recorrencia | null>(despesaInicial?.recorrencia ?? null)
+  const [parcela, setParcela] = useState(despesaInicial?.parcela?.toString() ?? '')
+  const [totalDeParcelas, setTotalDeParcelas] = useState(despesaInicial?.totalDeParcelas?.toString() ?? '')
   // A que menos muda vem marcada: só esta ocorrência.
   const [naSerie, setNaSerie] = useState(false)
   const editandoSerie = Boolean(despesaInicial?.recorrencia)
@@ -38,6 +48,10 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
   const [errosPorCampo, setErrosPorCampo] = useState<Record<string, string>>({})
 
   const temErroDeCampo = Object.keys(errosPorCampo).length > 0
+  // Sem repetição, as parcelas somem da tela e não vão na requisição.
+  const numeroDaParcela = recorrencia ? numeroOuNulo(parcela) : null
+  const numeroDoTotal = recorrencia ? numeroOuNulo(totalDeParcelas) : null
+  const parcelada = numeroDaParcela !== null && numeroDoTotal !== null
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
@@ -45,7 +59,10 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
     setErrosPorCampo({})
     setSalvando(true)
     try {
-      await aoSalvar({ descricao, valor: centavos / 100, prazo, recorrencia }, editandoSerie && naSerie)
+      await aoSalvar(
+        { descricao, valor: centavos / 100, prazo, recorrencia, parcela: numeroDaParcela, totalDeParcelas: numeroDoTotal },
+        editandoSerie && naSerie,
+      )
     } catch (excecao) {
       const falha = ErroDeFormulario.de(excecao, 'Não foi possível salvar a despesa')
       setErro(falha.message)
@@ -116,6 +133,42 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
           <ErroDeCampo mensagem={errosPorCampo.recorrencia} />
         </fieldset>
 
+        {/* Só na que se repete: a parcelada é uma recorrente com fim. */}
+        {recorrencia && (
+          <div className="sm:col-span-2">
+            <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Parcelas <span className="font-normal text-slate-500 dark:text-slate-400">(opcional)</span>
+            </span>
+            <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={999}
+                value={parcela}
+                onChange={(evento) => setParcela(evento.target.value)}
+                aria-label="Parcela"
+                className={CAMPO_DE_NUMERO}
+              />
+              de
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={999}
+                value={totalDeParcelas}
+                onChange={(evento) => setTotalDeParcelas(evento.target.value)}
+                aria-label="Total de parcelas"
+                className={CAMPO_DE_NUMERO}
+              />
+            </div>
+            <ErroDeCampo mensagem={errosPorCampo.parcela ?? errosPorCampo.totalDeParcelas} />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Para compra parcelada ou mensalidade com fim: a série para na última. Em branco, repete sem fim.
+            </p>
+          </div>
+        )}
+
         {editandoSerie && (
           <fieldset className="sm:col-span-2">
             <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Aplicar a</legend>
@@ -126,9 +179,10 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
                   valor: true,
                   rotulo: 'Todas as ocorrências pendentes',
                   descricao:
-                    despesaInicial?.recorrencia === 'MENSAL'
+                    (despesaInicial?.recorrencia === 'MENSAL'
                       ? 'Se o prazo mudar, as outras passam para o mesmo dia do mês. As pagas não mudam.'
-                      : 'Se o prazo mudar, as outras andam os mesmos dias. As pagas não mudam.',
+                      : 'Se o prazo mudar, as outras andam os mesmos dias. As pagas não mudam.') +
+                    (parcelada ? ' As parcelas seguem a numeração desta, e as que passarem da última saem do plano.' : ''),
                 },
               ].map((opcao) => (
                 <label
@@ -156,8 +210,16 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
 
       {recorrencia && (
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Ao marcar como paga, a próxima entra no plano com o mesmo valor, {recorrencia === 'SEMANAL' ? 'uma semana' : 'um mês'}{' '}
-          depois do prazo. Se a conta vier diferente, edite a próxima.
+          {parcelada && numeroDaParcela === numeroDoTotal ? (
+            <>Esta é a última parcela: paga, a série acaba.</>
+          ) : (
+            <>
+              Ao marcar como paga, a próxima entra no plano com o mesmo valor,{' '}
+              {recorrencia === 'SEMANAL' ? 'uma semana' : 'um mês'} depois do prazo
+              {parcelada && <>, como a parcela {numeroDaParcela! + 1} de {numeroDoTotal}</>}. Se a conta vier diferente,
+              edite a próxima.
+            </>
+          )}
         </p>
       )}
 

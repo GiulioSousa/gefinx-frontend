@@ -120,7 +120,9 @@ export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number;
         : ''
     // Com a próxima dentro dos dias que o plano mostra, o servidor a mantém: ela estaria lá de
     // qualquer jeito.
-    const proxima = !despesa.recorrencia
+    // A última parcela não teve próxima: não há o que dizer dela.
+    const ultimaParcela = despesa.totalDeParcelas !== null && despesa.parcela === despesa.totalDeParcelas
+    const proxima = !despesa.recorrencia || ultimaParcela
       ? ''
       : proximoPrazo(despesa.prazo, despesa.recorrencia) <= somarDias(hoje, DIAS_DO_PLANO)
         ? ' A próxima ocorrência continua no plano, que mostra os próximos 30 dias.'
@@ -225,6 +227,11 @@ export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number;
                       <>
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
                           paga em {formatarData(despesa.dataPagamento)}
+                          {despesa.totalDeParcelas !== null && (
+                            <span>
+                              · parcela {despesa.parcela} de {despesa.totalDeParcelas}
+                            </span>
+                          )}
                           {despesa.pagaComAtraso && (
                             <span className="rounded-full border border-current px-2 text-xs font-medium text-amber-700 dark:text-amber-300">
                               Após o prazo, {formatarData(despesa.prazo)}

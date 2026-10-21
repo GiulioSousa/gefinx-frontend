@@ -90,6 +90,9 @@ export interface DespesaPlanejada {
   prazo: string
   /** Nula na despesa que não se repete. */
   recorrencia: Recorrencia | null
+  /** "2 de 6": o número desta ocorrência e o total; a série para na última. Nulos se não é parcelada. */
+  parcela: number | null
+  totalDeParcelas: number | null
 }
 
 /**
@@ -154,6 +157,8 @@ export interface DespesaPaga {
   categoria: string | null
   pagaComAtraso: boolean
   recorrencia: Recorrencia | null
+  parcela: number | null
+  totalDeParcelas: number | null
 }
 
 /**

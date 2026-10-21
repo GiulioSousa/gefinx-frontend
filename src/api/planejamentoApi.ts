@@ -7,6 +7,9 @@ export interface DadosDespesaPlanejada {
   prazo: string
   /** Ausente ou nula: não se repete. */
   recorrencia?: Recorrencia | null
+  /** Juntos ou nenhum, e só na que se repete: "2 de 6". */
+  parcela?: number | null
+  totalDeParcelas?: number | null
 }
 
 export async function buscarPlanejamento(): Promise<Planejamento> {

@@ -174,7 +174,7 @@ export function Planejamento() {
       // A que menos apaga vem marcada: só esta, e a série segue.
       const escolha = await escolher({
         titulo: 'Excluir despesa',
-        mensagem: `${mensagem} Ela se repete ${REPETICAO[item.recorrencia]}.`,
+        mensagem: `${mensagem} Ela se repete ${REPETICAO[item.recorrencia]}${item.totalDeParcelas !== null ? `, e esta é a parcela ${item.parcela} de ${item.totalDeParcelas}` : ''}.`,
         confirmar: 'Excluir',
         perigosa: true,
         opcoes: [
@@ -340,6 +340,11 @@ export function Planejamento() {
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
                           até {formatarPrazo(item.prazo)}
                           {item.recorrencia && <span>· {REPETICAO[item.recorrencia]}</span>}
+                          {item.totalDeParcelas !== null && (
+                            <span>
+                              · parcela {item.parcela} de {item.totalDeParcelas}
+                            </span>
+                          )}
                           {selo && (
                             <span className={`rounded-full border border-current px-2 text-xs font-medium ${selo.classe}`}>
                               {selo.rotulo}

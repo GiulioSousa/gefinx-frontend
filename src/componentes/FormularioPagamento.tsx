@@ -24,7 +24,10 @@ interface FormularioPagamentoProps {
  * O tipo não aparece — é sempre despesa.
  */
 export function FormularioPagamento({ despesa, hoje, categorias, contas, aoSalvar, aoCancelar }: FormularioPagamentoProps) {
-  const [descricao, setDescricao] = useState(despesa.descricao)
+  // A parcela vai na descrição, para a transação dizer qual foi paga: "Notebook (2/6)".
+  const [descricao, setDescricao] = useState(
+    despesa.totalDeParcelas !== null ? `${despesa.descricao} (${despesa.parcela}/${despesa.totalDeParcelas})` : despesa.descricao,
+  )
   const [centavos, setCentavos] = useState(Math.round(despesa.valor * 100))
   const [dataTransacao, setDataTransacao] = useState(hoje)
   const [categoriaId, setCategoriaId] = useState<number | ''>('')
