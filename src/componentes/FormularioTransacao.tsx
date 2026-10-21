@@ -20,6 +20,35 @@ interface FormularioTransacaoProps {
   aoCancelar: () => void
 }
 
+function nomeDoTipo(tipo: TipoTransacao): string {
+  return TIPOS.find((opcao) => opcao.tipo === tipo)!.rotulo.toLowerCase()
+}
+
+/**
+ * Na edição, passar de transferência para despesa ou receita, ou o contrário, faz o servidor
+ * descartar o campo do formato anterior. O formulário esconde esse campo assim que o tipo muda,
+ * então é aqui que se diz o que vai sumir, antes de salvar. Entre despesa e receita não há aviso:
+ * a categoria fica à vista, vazia, pedindo outra.
+ */
+function descarteAoTrocarDeFormato(original: Transacao | undefined, tipo: TipoTransacao): string | null {
+  if (!original) return null
+  const eraTransferencia = original.tipo === 'TRANSFERENCIA'
+  if (eraTransferencia === (tipo === 'TRANSFERENCIA')) return null
+
+  if (eraTransferencia) {
+    const destino = original.nomeContaDestino ? ` para ${original.nomeContaDestino}` : ''
+    return (
+      `Esta transação era uma transferência${destino}. Salva como ${nomeDoTipo(tipo)}, ` +
+      'a conta de destino é descartada e o valor passa a mudar o saldo consolidado.'
+    )
+  }
+  const categoria = original.nomeCategoria ? ` em ${original.nomeCategoria}` : ''
+  return (
+    `Esta transação era uma ${nomeDoTipo(original.tipo)}${categoria}. Salva como transferência, ` +
+    `a categoria é descartada e o valor deixa de contar como ${nomeDoTipo(original.tipo)}.`
+  )
+}
+
 /** Ver `dataLocal`: com `toISOString`, das 21h à meia-noite o padrão era o dia seguinte. */
 function dataDeHoje(): string {
   return dataLocal(new Date())
@@ -66,11 +95,20 @@ export function FormularioTransacao({
 
   function trocarTipo(novoTipo: TipoTransacao) {
     setTipo(novoTipo)
+    // Voltar ao tipo que a transação tinha devolve o que ela tinha: desfazer um clique não
+    // deveria custar escolher de novo a categoria ou o destino.
+    if (transacaoInicial && novoTipo === transacaoInicial.tipo) {
+      setCategoriaId(transacaoInicial.categoriaId ?? '')
+      setContaDestinoId(transacaoInicial.contaDestinoId ?? '')
+      return
+    }
     // Os dois campos são exclusivos entre si; deixar o valor antigo faria a requisição
     // carregar um campo que não pertence ao formato escolhido.
     setCategoriaId('')
     setContaDestinoId('')
   }
+
+  const avisoDeDescarte = descarteAoTrocarDeFormato(transacaoInicial, tipo)
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
@@ -153,6 +191,12 @@ export function FormularioTransacao({
             ))}
           </div>
         </fieldset>
+
+        {avisoDeDescarte && (
+          <p role="status" className="text-sm text-amber-700 sm:col-span-2 dark:text-amber-300">
+            {avisoDeDescarte}
+          </p>
+        )}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor</label>
