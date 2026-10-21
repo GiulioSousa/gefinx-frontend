@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { ContaDoPlanejamento, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Pagina, Planejamento, Recorrencia } from '../tipos'
+import type { CalendarioDoAno, ContaDoPlanejamento, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Pagina, PeriodoSemTrabalho, Planejamento, Recorrencia } from '../tipos'
 
 export interface DadosDespesaPlanejada {
   descricao: string
@@ -78,4 +78,34 @@ export async function listarContasDoPlanejamento(): Promise<ContaDoPlanejamento[
 export async function definirContasDeFora(contasDeFora: number[]): Promise<ContaDoPlanejamento[]> {
   const { data } = await clienteApi.put<ContaDoPlanejamento[]>('/planejamento/contas', { contasDeFora })
   return data
+}
+
+export async function buscarCalendario(ano: number): Promise<CalendarioDoAno> {
+  const { data } = await clienteApi.get<CalendarioDoAno>('/planejamento/calendario', { params: { ano } })
+  return data
+}
+
+/** O feriado ignorado volta a contar como dia de trabalho. Repetir não muda nada. */
+export async function ignorarFeriado(data: string): Promise<void> {
+  await clienteApi.put(`/planejamento/calendario/feriados-ignorados/${data}`)
+}
+
+export async function considerarFeriado(data: string): Promise<void> {
+  await clienteApi.delete(`/planejamento/calendario/feriados-ignorados/${data}`)
+}
+
+/** Sem `fim`, é um dia só. */
+export interface DadosPeriodoSemTrabalho {
+  inicio: string
+  fim?: string
+  descricao?: string
+}
+
+export async function adicionarPeriodoSemTrabalho(dados: DadosPeriodoSemTrabalho): Promise<PeriodoSemTrabalho> {
+  const { data } = await clienteApi.post<PeriodoSemTrabalho>('/planejamento/calendario/periodos', dados)
+  return data
+}
+
+export async function excluirPeriodoSemTrabalho(id: number): Promise<void> {
+  await clienteApi.delete(`/planejamento/calendario/periodos/${id}`)
 }

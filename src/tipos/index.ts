@@ -119,6 +119,9 @@ export interface ItemDoPlanejamento extends DespesaPlanejada {
  * O plano do dia, calculado pelo servidor. `hoje` é o dia que ele considerou, no fuso
  * configurado. A meta sai do saldo do fim de ontem e fica parada durante o dia; o ganho de
  * hoje é o saldo de agora menos o de ontem, e `restanteHoje` o que ainda falta dele.
+ *
+ * `folgaDeHoje` é o motivo de hoje não contar como dia de trabalho — "Domingo", o nome do
+ * feriado, a descrição do período —, e nulo quando conta.
  */
 export interface Planejamento {
   hoje: string
@@ -128,6 +131,7 @@ export interface Planejamento {
   metaDiaria: number
   restanteHoje: number
   prazoDecisivo: string | null
+  folgaDeHoje: string | null
   itens: ItemDoPlanejamento[]
 }
 
@@ -157,6 +161,28 @@ export interface DespesaPaga {
  * plano por estar como nasceu (`REMOVIDA`), ou ficou por já ter sido editada (`MANTIDA`).
  */
 export type DesfechoDaProxima = 'NENHUMA' | 'REMOVIDA' | 'MANTIDA' | 'MANTIDA_NO_PERIODO'
+
+/** Um feriado nacional do ano. `ignorado` é o dia em que se decidiu trabalhar: ele volta a contar. */
+export interface FeriadoDoAno {
+  data: string
+  nome: string
+  ignorado: boolean
+}
+
+/** Feriado local, folga, férias. Um dia só tem `inicio` e `fim` iguais; os dois contam. */
+export interface PeriodoSemTrabalho {
+  id: number
+  inicio: string
+  fim: string
+  descricao: string | null
+}
+
+/** Os feriados do ano, e os períodos que tocam o ano, inclusive os que o atravessam. */
+export interface CalendarioDoAno {
+  ano: number
+  feriados: FeriadoDoAno[]
+  periodos: PeriodoSemTrabalho[]
+}
 
 export interface ContaDoPlanejamento {
   id: number

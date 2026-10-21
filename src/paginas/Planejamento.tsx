@@ -7,6 +7,7 @@ import { listarCategorias } from '../api/categoriasApi'
 import { listarContas } from '../api/contasApi'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
+import { CalendarioDoPlanejamento } from '../componentes/CalendarioDoPlanejamento'
 import { EscolhaDeContasDoPlanejamento } from '../componentes/EscolhaDeContasDoPlanejamento'
 import { FormularioDespesaPlanejada } from '../componentes/FormularioDespesaPlanejada'
 import { FormularioPagamento } from '../componentes/FormularioPagamento'
@@ -103,6 +104,7 @@ export function Planejamento() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [despesaEmEdicao, setDespesaEmEdicao] = useState<ItemDoPlanejamento | undefined>(undefined)
   const [mostrarContas, setMostrarContas] = useState(false)
+  const [mostrarCalendario, setMostrarCalendario] = useState(false)
   const [menu, setMenu] = useState<{ item: ItemDoPlanejamento; ancora: HTMLElement } | null>(null)
   // A despesa sendo paga, com as categorias e contas que o formulário oferece. Buscadas só
   // ao abrir: a tela de planejamento não precisa delas para nada mais.
@@ -243,26 +245,51 @@ export function Planejamento() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Planejamento</h1>
-        <button
-          type="button"
-          onClick={() => setMostrarContas(true)}
-          className="flex items-center gap-2 rounded-md p-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          <svg
-            className="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setMostrarCalendario(true)}
+            disabled={!plano}
+            className="flex items-center gap-2 rounded-md p-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-60 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <rect x="2" y="5" width="20" height="14" rx="2" />
-            <line x1="2" y1="10" x2="22" y2="10" />
-          </svg>
-          Contas
-        </button>
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Calendário
+          </button>
+          <button
+            type="button"
+            onClick={() => setMostrarContas(true)}
+            className="flex items-center gap-2 rounded-md p-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+            </svg>
+            Contas
+          </button>
+        </div>
       </div>
 
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
@@ -395,6 +422,17 @@ export function Planejamento() {
         </Modal>
       )}
 
+      {/* Sem fechar ao tocar fora: o formulário de período pode estar pela metade. */}
+      {mostrarCalendario && plano && (
+        <Modal titulo="Calendário de trabalho" aoFechar={() => setMostrarCalendario(false)} fecharAoTocarFora={false}>
+          <CalendarioDoPlanejamento
+            hoje={plano.hoje}
+            aoMudar={recarregar}
+            aoFechar={() => setMostrarCalendario(false)}
+          />
+        </Modal>
+      )}
+
       {mostrarContas && (
         <Modal titulo="Contas no planejamento" aoFechar={() => setMostrarContas(false)}>
           <EscolhaDeContasDoPlanejamento
@@ -433,10 +471,10 @@ function CartaoDaMeta({ plano }: { plano: Plano }) {
 
   const cumprida = plano.restanteHoje <= 0
   const ganhoVisivel = Math.max(0, plano.ganhoDeHoje)
-  // Domingo não entra na conta da meta, e uma barra de "hoje" pediria um ganho que o plano
-  // não espera: nesse dia o cartão mostra só a meta. O dia vem do servidor, que decide pelo
-  // fuso configurado.
-  const domingo = new Date(`${plano.hoje}T00:00:00`).getDay() === 0
+  // Na folga — domingo, feriado, período sem trabalho — hoje não entra na conta da meta, e uma
+  // barra de "hoje" pediria um ganho que o plano não espera: o cartão diz o motivo no lugar.
+  // Quem decide é o servidor, que conhece o calendário de quem usa.
+  const folga = plano.folgaDeHoje
 
   return (
     <div className={`space-y-3 rounded-lg p-4 sm:p-5 ${VIDRO}`}>
@@ -445,12 +483,16 @@ function CartaoDaMeta({ plano }: { plano: Plano }) {
         <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatarMoeda(plano.metaDiaria)}</p>
         {plano.prazoDecisivo && (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            de segunda a sábado, até {formatarPrazo(plano.prazoDecisivo)}
+            nos dias de trabalho, até {formatarPrazo(plano.prazoDecisivo)}
           </p>
         )}
       </div>
 
-      {!domingo && (
+      {folga ? (
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Hoje não conta: <span className="font-medium">{folga}</span>. A meta vale para os próximos dias de trabalho.
+        </p>
+      ) : (
         <>
           <Barra
             valor={porcentagem(ganhoVisivel, plano.metaDiaria)}
