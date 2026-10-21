@@ -243,7 +243,8 @@ export function Planejamento() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      {/* Quebra a linha em tela estreita: título e dois botões com texto não cabem em 360 px. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Planejamento</h1>
         <div className="flex items-center gap-1">
           <button
