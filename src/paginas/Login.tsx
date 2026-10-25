@@ -4,6 +4,7 @@ import { useAutenticacao } from '../contextos/ContextoAutenticacao'
 import { ErroDeFormulario } from '../api/erros'
 import { ErroDeCampo } from '../componentes/ErroDeCampo'
 import { BotaoDeTema } from '../componentes/BotaoDeTema'
+import { LogoEmpilhada } from '../componentes/Logo'
 import { VIDRO } from '../componentes/vidro'
 
 export function Login() {
@@ -41,8 +42,13 @@ export function Login() {
       <BotaoDeTema className="absolute right-4 top-4" />
 
       <div className={`w-full max-w-sm rounded-lg p-6 ${VIDRO}`}>
-        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Entrar</h1>
-        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">GeFinX · Gerenciador financeiro pessoal</p>
+        {/* A marca inteira no lugar da linha de texto que dizia o nome e o que o app é: o
+            subtítulo da logo já diz "gestão financeira", e repetir isso embaixo dela seria
+            dizer duas vezes a mesma coisa. É a única tela onde a logo aparece em tamanho
+            grande — quem chega aqui pode estar vindo de um link, e é ela que responde em que
+            app a senha está sendo pedida. */}
+        <LogoEmpilhada className="mx-auto mb-6 w-48" />
+        <h1 className="mb-6 text-center text-xl font-semibold text-slate-900 dark:text-slate-100">Entrar</h1>
 
         {sessaoExpirada && !erro && (
           <p
