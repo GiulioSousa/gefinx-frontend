@@ -8,6 +8,7 @@ import { BotaoDeTema } from './BotaoDeTema'
 import { FormularioTrocaDeSenha } from './FormularioTrocaDeSenha'
 import { Modal } from './Modal'
 import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
+import { Logo, Simbolo } from './Logo'
 import { BOLHA, VIDRO } from './vidro'
 
 const linkClasse = ({ isActive }: { isActive: boolean }) =>
@@ -174,7 +175,11 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="mx-auto max-w-5xl px-4">
           <div className="flex items-center justify-between py-3">
-            <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">GeFinX</span>
+            {/* A logo no lugar do nome escrito: o mesmo "GeFinX" que o leitor de tela
+                anuncia, agora com o símbolo. Sem o subtítulo — nesta altura ele teria 8px.
+                Não é link: o Painel já é a primeira aba, e um segundo caminho para a mesma
+                tela só acrescenta uma parada a mais para quem navega pelo teclado. */}
+            <Logo className="h-7 shrink-0" />
 
             {/*
               A partir de `sm` tudo cabe numa linha, que é como sempre foi. Abaixo disso não
@@ -237,7 +242,12 @@ export function Layout({ children }: { children: ReactNode }) {
               ancora={ancoraDaConta}
               aoFechar={() => setAncoraDaConta(null)}
             >
-              <span className="truncate px-3 pt-1.5 pb-2 text-sm text-slate-500 dark:text-slate-400">{usuario}</span>
+              {/* O símbolo ao lado do nome: o menu abre fora do cabeçalho, por cima do
+                  conteúdo, e é o que amarra ele de volta ao app. */}
+              <span className="flex items-center gap-2 px-3 pt-1.5 pb-2 text-sm text-slate-500 dark:text-slate-400">
+                <Simbolo className="h-4 w-4 shrink-0" />
+                <span className="truncate">{usuario}</span>
+              </span>
               {/* O tema não fecha o menu: quem troca vê a mudança e decide se volta. */}
               <BotaoDeTema comRotulo />
               {/* Com ícone, como o tema acima: sem ele o texto das duas começaria mais à

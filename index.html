@@ -2,7 +2,24 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      Os arquivos vêm do kit da marca (assets/gefinx-logo/icones), copiados para public/.
+      O .ico primeiro e com `sizes`: é o que o Windows e os navegadores antigos pedem, e sem
+      a medida o Chrome baixa os dois. O .svg é o que aparece na aba de quem tem suporte, por
+      ser o único que não serrilha em tela de alta densidade.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <!--
+      A cor da barra do navegador no celular acompanha o tema escolhido, e não uma cor fixa:
+      são os mesmos tons do cabeçalho logo abaixo dela (branco no claro, slate-900 no escuro),
+      para a barra parecer continuação da tela em vez de uma faixa de outra cor. O
+      #070A1A do kit fica no site.webmanifest, onde pinta a splash do app instalado.
+    -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172b" media="(prefers-color-scheme: dark)" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeFinX</title>
     <script>
