@@ -70,7 +70,7 @@ function Barra({ valor, rotulo }: { valor: number; rotulo: string }) {
 }
 
 /** O que falta, ou por que não há o que calcular. */
-function DetalheDoItem({ item }: { item: ItemDoPlanejamento }) {
+function DetalheDoItem({ item, pendente }: { item: ItemDoPlanejamento; pendente: number }) {
   if (item.situacao === 'COBERTA') {
     return <>O saldo de agora já paga esta despesa.</>
   }
@@ -81,14 +81,21 @@ function DetalheDoItem({ item }: { item: ItemDoPlanejamento }) {
 
   if (item.situacao === 'ATRASADA') {
     // Atrasada vale mesmo com o saldo cobrindo: ter o dinheiro não paga a conta.
-    return item.falta > 0 ? <>{falta} O prazo já passou.</> : <>O saldo cobre, mas o prazo já passou: falta pagar.</>
+    return item.falta > 0 ? (
+      <>{falta} O prazo já passou, e o que falta fica na meta até ela ser paga.</>
+    ) : (
+      <>O saldo cobre, mas o prazo já passou: falta pagar.</>
+    )
   }
   if (item.situacao === 'SEM_DIAS_DE_TRABALHO') {
-    return <>{falta} Não sobra dia de trabalho antes do prazo.</>
+    return <>{falta} Não sobra dia de trabalho antes do prazo, e o que falta entra inteiro na meta.</>
   }
+  // O por dia já desconta o pendente, que a meta pede à parte: sem o aviso, a falta dividida
+  // pelos dias não daria a conta.
+  const depoisDoPendente = pendente > 0 ? ', fora o pendente' : ''
   return (
     <>
-      {falta} {formatarMoeda(item.porDia ?? 0)} por dia, em {item.diasDeTrabalho}{' '}
+      {falta} {formatarMoeda(item.porDia ?? 0)} por dia{depoisDoPendente}, em {item.diasDeTrabalho}{' '}
       {item.diasDeTrabalho === 1 ? 'dia de trabalho' : 'dias de trabalho'}.
     </>
   )
@@ -358,7 +365,7 @@ export function Planejamento() {
                         />
 
                         <span className="block text-sm text-slate-600 dark:text-slate-300">
-                          <DetalheDoItem item={item} />
+                          <DetalheDoItem item={item} pendente={plano.pendente} />
                         </span>
                       </button>
                     </li>
@@ -467,8 +474,9 @@ function CartaoDaMeta({ plano }: { plano: Plano }) {
     return (
       <div className={`rounded-lg p-4 sm:p-5 ${VIDRO}`}>
         <p className="text-sm text-slate-600 dark:text-slate-300">
+          {/* Sem meta e com algo descoberto, o saldo de ontem cobria tudo: a falta veio do dia de hoje. */}
           {algoDescoberto
-            ? 'Não há dia de trabalho até os prazos que faltam cobrir: veja as despesas abaixo.'
+            ? 'O saldo de ontem cobria as despesas, mas o de agora não cobre mais: veja as despesas abaixo.'
             : 'O saldo de agora cobre todas as despesas planejadas.'}
         </p>
       </div>
@@ -487,10 +495,22 @@ function CartaoDaMeta({ plano }: { plano: Plano }) {
       <div>
         <p className="text-sm text-slate-500 dark:text-slate-400">Ganhar por dia</p>
         <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatarMoeda(plano.metaDiaria)}</p>
-        {plano.prazoDecisivo && (
+        {plano.pendente > 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            nos dias de trabalho, até {formatarPrazo(plano.prazoDecisivo)}
+            {formatarMoeda(plano.pendente)} pendentes, que ficam na meta até serem pagos
+            {plano.prazoDecisivo && (
+              <>
+                , mais {formatarMoeda(plano.metaDiaria - plano.pendente)} nos dias de trabalho, até{' '}
+                {formatarPrazo(plano.prazoDecisivo)}
+              </>
+            )}
           </p>
+        ) : (
+          plano.prazoDecisivo && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              nos dias de trabalho, até {formatarPrazo(plano.prazoDecisivo)}
+            </p>
+          )
         )}
       </div>
 

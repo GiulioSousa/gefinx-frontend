@@ -108,7 +108,9 @@ export type SituacaoDaDespesa = 'COBERTA' | 'EM_ANDAMENTO' | 'SEM_DIAS_DE_TRABAL
  * `acumulado` é a soma desta com as que vencem antes, e `falta` é o que o saldo de agora não
  * cobre desse acumulado — por isso pode passar do valor da própria despesa.
  *
- * `porDia` é nulo quando ela não entra na meta: coberta, atrasada ou sem dia de trabalho.
+ * `porDia` é nulo quando não há dias por onde dividir: coberta, atrasada ou sem dia de
+ * trabalho. Nas duas últimas, o que falta entra inteiro na meta, como `pendente` do plano, e o
+ * `porDia` das seguintes já o desconta.
  */
 export interface ItemDoPlanejamento extends DespesaPlanejada {
   acumulado: number
@@ -123,6 +125,9 @@ export interface ItemDoPlanejamento extends DespesaPlanejada {
  * configurado. A meta sai do saldo do fim de ontem e fica parada durante o dia; o ganho de
  * hoje é o saldo de agora menos o de ontem, e `restanteHoje` o que ainda falta dele.
  *
+ * `pendente` é a parte da meta que não se divide por dias: o que falta das despesas atrasadas
+ * ou sem dia de trabalho até o prazo. Fica somado à meta enquanto elas não forem pagas.
+ *
  * `folgaDeHoje` é o motivo de hoje não contar como dia de trabalho — "Domingo", o nome do
  * feriado, a descrição do período —, e nulo quando conta.
  */
@@ -132,6 +137,7 @@ export interface Planejamento {
   saldoAtual: number
   ganhoDeHoje: number
   metaDiaria: number
+  pendente: number
   restanteHoje: number
   prazoDecisivo: string | null
   folgaDeHoje: string | null
