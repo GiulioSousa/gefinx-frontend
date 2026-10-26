@@ -38,10 +38,15 @@ function porcentagem(parte: number, todo: number): number {
   vermelho para o que falhou, âmbar para o aviso que não é erro. Sem fundo tingido, para o
   contraste ser o do texto sobre o cartão, que a PALETA.md já mediu.
 
+  Laranja para "Vence hoje", entre o âmbar do aviso e o vermelho do que falhou, que é onde ela
+  está: ainda dá tempo, mas só hoje. É o único tom da tela que não vem da paleta antiga, e a
+  PALETA.md traz a medida de contraste dos dois temas.
+
   Em andamento não tem selo: é o caso comum, e um selo em todo cartão deixaria de chamar
   atenção para os outros.
 */
 const SELO: Record<SituacaoDaDespesa, { rotulo: string; classe: string } | null> = {
+  VENCE_HOJE: { rotulo: 'Vence hoje', classe: 'text-orange-700 dark:text-orange-400' },
   COBERTA: { rotulo: 'Coberta', classe: 'text-emerald-700 dark:text-emerald-400' },
   EM_ANDAMENTO: null,
   SEM_DIAS_DE_TRABALHO: { rotulo: 'Sem dias de trabalho', classe: 'text-amber-700 dark:text-amber-300' },
@@ -85,6 +90,15 @@ function DetalheDoItem({ item, pendente }: { item: ItemDoPlanejamento; pendente:
       <>{falta} O prazo já passou, e o que falta fica na meta até ela ser paga.</>
     ) : (
       <>O saldo cobre, mas o prazo já passou: falta pagar.</>
+    )
+  }
+  if (item.situacao === 'VENCE_HOJE') {
+    // Pelo mesmo motivo da atrasada, o selo vem antes de "coberta" — e aqui o texto diz o que
+    // o selo não cabe dizer: se o dinheiro está lá, só falta pagar.
+    return item.falta > 0 ? (
+      <>{falta} O prazo é hoje, e o que falta entra inteiro na meta.</>
+    ) : (
+      <>O saldo cobre, e o prazo é hoje: falta pagar.</>
     )
   }
   if (item.situacao === 'SEM_DIAS_DE_TRABALHO') {

@@ -96,21 +96,31 @@ export interface DespesaPlanejada {
 }
 
 /**
+ * - `VENCE_HOJE`: o prazo é hoje, esteja ela coberta ou não.
  * - `COBERTA`: o saldo de agora paga esta despesa e todas as que vencem antes dela.
  * - `EM_ANDAMENTO`: falta dinheiro, e há dias de trabalho até o prazo.
- * - `SEM_DIAS_DE_TRABALHO`: falta dinheiro e não sobra dia de trabalho antes do prazo.
+ * - `SEM_DIAS_DE_TRABALHO`: falta dinheiro e não sobra dia de trabalho antes do prazo, que
+ *   ainda não chegou — hoje é domingo e ela vence na segunda, por exemplo.
  * - `ATRASADA`: o prazo passou e ela não foi paga, mesmo que o saldo já a cubra.
+ *
+ * `ATRASADA` e `VENCE_HOJE`, nessa ordem, ganham do resto: ter o dinheiro não paga a conta, e o
+ * prazo de hoje ou de antes é o que pede ação. Quem decide é o servidor.
  */
-export type SituacaoDaDespesa = 'COBERTA' | 'EM_ANDAMENTO' | 'SEM_DIAS_DE_TRABALHO' | 'ATRASADA'
+export type SituacaoDaDespesa =
+  | 'VENCE_HOJE'
+  | 'COBERTA'
+  | 'EM_ANDAMENTO'
+  | 'SEM_DIAS_DE_TRABALHO'
+  | 'ATRASADA'
 
 /**
  * Uma despesa dentro do plano. As despesas disputam o mesmo saldo, por ordem de prazo:
  * `acumulado` é a soma desta com as que vencem antes, e `falta` é o que o saldo de agora não
  * cobre desse acumulado — por isso pode passar do valor da própria despesa.
  *
- * `porDia` é nulo quando não há dias por onde dividir: coberta, atrasada ou sem dia de
- * trabalho. Nas duas últimas, o que falta entra inteiro na meta, como `pendente` do plano, e o
- * `porDia` das seguintes já o desconta.
+ * `porDia` é nulo quando não há dias por onde dividir: coberta, atrasada, vencendo hoje ou
+ * sem dia de trabalho. Nas três últimas, o que falta entra inteiro na meta, como `pendente` do
+ * plano, e o `porDia` das seguintes já o desconta.
  */
 export interface ItemDoPlanejamento extends DespesaPlanejada {
   acumulado: number
