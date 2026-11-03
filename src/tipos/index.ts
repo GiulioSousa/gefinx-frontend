@@ -82,6 +82,33 @@ export interface FiltroSaldo {
  */
 export type Recorrencia = 'SEMANAL' | 'MENSAL'
 
+/**
+ * As cores que uma etiqueta pode ter: nomes, e não códigos de cor. O tom de cada uma, nos dois
+ * temas, fica em `componentes/etiquetas.tsx`.
+ */
+export type CorDaEtiqueta =
+  | 'ROXO'
+  | 'INDIGO'
+  | 'AZUL'
+  | 'CIANO'
+  | 'VERDE'
+  | 'AMBAR'
+  | 'LARANJA'
+  | 'VERMELHO'
+  | 'ROSA'
+  | 'CINZA'
+
+/**
+ * A marca de uma despesa planejada — de que cartão é a compra. Só visual. `despesas` é quantas
+ * ela marca, pendentes e pagas: o que fica sem etiqueta se ela for excluída.
+ */
+export interface Etiqueta {
+  id: number
+  nome: string
+  cor: CorDaEtiqueta
+  despesas: number
+}
+
 /** Um pagamento que ainda vai acontecer. Não é transação, e não mexe no saldo. */
 export interface DespesaPlanejada {
   id: number
@@ -93,6 +120,8 @@ export interface DespesaPlanejada {
   /** "2 de 6": o número desta ocorrência e o total; a série para na última. Nulos se não é parcelada. */
   parcela: number | null
   totalDeParcelas: number | null
+  /** Nula na despesa sem etiqueta. */
+  etiquetaId: number | null
 }
 
 /**
@@ -175,6 +204,7 @@ export interface DespesaPaga {
   recorrencia: Recorrencia | null
   parcela: number | null
   totalDeParcelas: number | null
+  etiquetaId: number | null
 }
 
 /**

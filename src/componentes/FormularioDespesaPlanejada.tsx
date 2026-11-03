@@ -1,9 +1,14 @@
-import { useState, type FormEvent } from 'react'
-import type { DespesaPlanejada, Recorrencia } from '../tipos'
+import { useId, useState, type FormEvent } from 'react'
+import type { DespesaPlanejada, Etiqueta, Recorrencia } from '../tipos'
+import * as planejamentoApi from '../api/planejamentoApi'
 import type { DadosDespesaPlanejada } from '../api/planejamentoApi'
 import { ErroDeFormulario } from '../api/erros'
 import { CampoDeValor } from './CampoDeValor'
 import { ErroDeCampo } from './ErroDeCampo'
+import { CHIP, CLASSE_DA_COR } from './coresDaEtiqueta'
+import { EditorDeEtiqueta } from './etiquetas'
+import { GerenciarEtiquetas } from './GerenciarEtiquetas'
+import { Modal } from './Modal'
 
 const CAMPO =
   'w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none'
@@ -24,6 +29,9 @@ const REPETICOES: { valor: Recorrencia | null; rotulo: string }[] = [
 
 interface FormularioDespesaPlanejadaProps {
   despesaInicial?: DespesaPlanejada
+  etiquetas: Etiqueta[]
+  /** Relê as etiquetas depois de criar, editar ou excluir uma: a lista volta pelas props. */
+  aoMudarEtiquetas: () => Promise<void>
   /** `serie`: a edição vale também para as outras pendentes da série. Só na edição de uma recorrente. */
   aoSalvar: (dados: DadosDespesaPlanejada, serie: boolean) => Promise<void>
   aoCancelar: () => void
@@ -33,13 +41,23 @@ interface FormularioDespesaPlanejadaProps {
  * O prazo não tem mínimo. A API aceita data passada — uma despesa vencida e não paga ainda
  * precisa ser editada —, e barrar aqui só na criação faria as duas telas discordarem.
  */
-export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancelar }: FormularioDespesaPlanejadaProps) {
+export function FormularioDespesaPlanejada({
+  despesaInicial,
+  etiquetas,
+  aoMudarEtiquetas,
+  aoSalvar,
+  aoCancelar,
+}: FormularioDespesaPlanejadaProps) {
   const [descricao, setDescricao] = useState(despesaInicial?.descricao ?? '')
   const [centavos, setCentavos] = useState(despesaInicial ? Math.round(despesaInicial.valor * 100) : 0)
   const [prazo, setPrazo] = useState(despesaInicial?.prazo ?? '')
   const [recorrencia, setRecorrencia] = useState<Recorrencia | null>(despesaInicial?.recorrencia ?? null)
   const [parcela, setParcela] = useState(despesaInicial?.parcela?.toString() ?? '')
   const [totalDeParcelas, setTotalDeParcelas] = useState(despesaInicial?.totalDeParcelas?.toString() ?? '')
+  const [etiquetaEscolhida, setEtiquetaEscolhida] = useState<number | null>(despesaInicial?.etiquetaId ?? null)
+  const [criandoEtiqueta, setCriandoEtiqueta] = useState(false)
+  const [gerenciandoEtiquetas, setGerenciandoEtiquetas] = useState(false)
+  const grupoDaEtiqueta = useId()
   // A que menos muda vem marcada: só esta ocorrência.
   const [naSerie, setNaSerie] = useState(false)
   const editandoSerie = Boolean(despesaInicial?.recorrencia)
@@ -52,6 +70,20 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
   const numeroDaParcela = recorrencia ? numeroOuNulo(parcela) : null
   const numeroDoTotal = recorrencia ? numeroOuNulo(totalDeParcelas) : null
   const parcelada = numeroDaParcela !== null && numeroDoTotal !== null
+  // A escolhida pode ter sido excluída em "Gerenciar": aí a despesa fica sem etiqueta.
+  const etiquetaId = etiquetas.some((etiqueta) => etiqueta.id === etiquetaEscolhida) ? etiquetaEscolhida : null
+
+  async function criarEtiqueta(dados: planejamentoApi.DadosEtiqueta) {
+    let nova: Etiqueta
+    try {
+      nova = await planejamentoApi.criarEtiqueta(dados)
+    } catch (excecao) {
+      throw ErroDeFormulario.de(excecao, 'Não foi possível criar a etiqueta')
+    }
+    await aoMudarEtiquetas()
+    setEtiquetaEscolhida(nova.id)
+    setCriandoEtiqueta(false)
+  }
 
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault()
@@ -60,7 +92,15 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
     setSalvando(true)
     try {
       await aoSalvar(
-        { descricao, valor: centavos / 100, prazo, recorrencia, parcela: numeroDaParcela, totalDeParcelas: numeroDoTotal },
+        {
+          descricao,
+          valor: centavos / 100,
+          prazo,
+          recorrencia,
+          parcela: numeroDaParcela,
+          totalDeParcelas: numeroDoTotal,
+          etiquetaId,
+        },
         editandoSerie && naSerie,
       )
     } catch (excecao) {
@@ -107,6 +147,62 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
           />
           <ErroDeCampo mensagem={errosPorCampo.prazo} />
         </div>
+
+        {/* Chips, e não uma lista: são poucas, e a cor só ajuda a reconhecer se estiver à vista. */}
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Etiqueta <span className="font-normal text-slate-500 dark:text-slate-400">(opcional)</span>
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            <label className={CHIP}>
+              <input
+                type="radio"
+                name={grupoDaEtiqueta}
+                checked={etiquetaId === null}
+                onChange={() => setEtiquetaEscolhida(null)}
+                className="sr-only"
+              />
+              Nenhuma
+            </label>
+            {etiquetas.map((etiqueta) => (
+              <label key={etiqueta.id} className={CHIP}>
+                <input
+                  type="radio"
+                  name={grupoDaEtiqueta}
+                  checked={etiquetaId === etiqueta.id}
+                  onChange={() => setEtiquetaEscolhida(etiqueta.id)}
+                  className="sr-only"
+                />
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full bg-current ${CLASSE_DA_COR[etiqueta.cor]}`} aria-hidden="true" />
+                {etiqueta.nome}
+              </label>
+            ))}
+            {!criandoEtiqueta && (
+              <button
+                type="button"
+                onClick={() => setCriandoEtiqueta(true)}
+                className="rounded-md px-2 py-1 text-sm font-medium text-emerald-700 hover:bg-slate-100 dark:text-emerald-400 dark:hover:bg-slate-800"
+              >
+                + Nova etiqueta
+              </button>
+            )}
+            {etiquetas.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setGerenciandoEtiquetas(true)}
+                className="rounded-md px-2 py-1 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Gerenciar
+              </button>
+            )}
+          </div>
+          {criandoEtiqueta && (
+            <div className="mt-2">
+              <EditorDeEtiqueta rotuloDoBotao="Criar" aoSalvar={criarEtiqueta} aoCancelar={() => setCriandoEtiqueta(false)} />
+            </div>
+          )}
+          <ErroDeCampo mensagem={errosPorCampo.etiquetaId} />
+        </fieldset>
 
         {/* À vista, como o tipo da transação: são só três, e escondê-las numa lista faria a
             repetição passar despercebida no cadastro. */}
@@ -245,6 +341,13 @@ export function FormularioDespesaPlanejada({ despesaInicial, aoSalvar, aoCancela
           Cancelar
         </button>
       </div>
+
+      {/* Sobre o formulário, que continua aberto embaixo com o que já foi digitado. */}
+      {gerenciandoEtiquetas && (
+        <Modal titulo="Etiquetas" aoFechar={() => setGerenciandoEtiquetas(false)}>
+          <GerenciarEtiquetas etiquetas={etiquetas} aoMudar={aoMudarEtiquetas} />
+        </Modal>
+      )}
     </form>
   )
 }

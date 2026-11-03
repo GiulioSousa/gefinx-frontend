@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { CalendarioDoAno, ContaDoPlanejamento, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Pagina, PeriodoSemTrabalho, Planejamento, Recorrencia } from '../tipos'
+import type { CalendarioDoAno, ContaDoPlanejamento, CorDaEtiqueta, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Etiqueta, Pagina, PeriodoSemTrabalho, Planejamento, Recorrencia } from '../tipos'
 
 export interface DadosDespesaPlanejada {
   descricao: string
@@ -10,6 +10,8 @@ export interface DadosDespesaPlanejada {
   /** Juntos ou nenhum, e só na que se repete: "2 de 6". */
   parcela?: number | null
   totalDeParcelas?: number | null
+  /** Ausente ou nula: sem etiqueta. */
+  etiquetaId?: number | null
 }
 
 export async function buscarPlanejamento(): Promise<Planejamento> {
@@ -111,4 +113,31 @@ export async function adicionarPeriodoSemTrabalho(dados: DadosPeriodoSemTrabalho
 
 export async function excluirPeriodoSemTrabalho(id: number): Promise<void> {
   await clienteApi.delete(`/planejamento/calendario/periodos/${id}`)
+}
+
+/** Em ordem de nome, cada uma com quantas despesas marca. */
+export async function listarEtiquetas(): Promise<Etiqueta[]> {
+  const { data } = await clienteApi.get<Etiqueta[]>('/planejamento/etiquetas')
+  return data
+}
+
+export interface DadosEtiqueta {
+  nome: string
+  cor: CorDaEtiqueta
+}
+
+/** Recusada com 400 em `nome` se já houver uma com o mesmo nome, sem diferenciar maiúsculas. */
+export async function criarEtiqueta(dados: DadosEtiqueta): Promise<Etiqueta> {
+  const { data } = await clienteApi.post<Etiqueta>('/planejamento/etiquetas', dados)
+  return data
+}
+
+export async function atualizarEtiqueta(id: number, dados: DadosEtiqueta): Promise<Etiqueta> {
+  const { data } = await clienteApi.put<Etiqueta>(`/planejamento/etiquetas/${id}`, dados)
+  return data
+}
+
+/** As despesas que ela marcava ficam sem etiqueta, e nada mais muda nelas. */
+export async function excluirEtiqueta(id: number): Promise<void> {
+  await clienteApi.delete(`/planejamento/etiquetas/${id}`)
 }

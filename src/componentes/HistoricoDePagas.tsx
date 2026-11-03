@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useConfirmacao } from '../contextos/ContextoConfirmacao'
-import type { DesfechoDaProxima, DespesaPaga, Recorrencia } from '../tipos'
+import type { DesfechoDaProxima, DespesaPaga, Etiqueta, Recorrencia } from '../tipos'
 import { desfazerPagamento, listarDespesasPagas } from '../api/planejamentoApi'
 import { extrairMensagemErro } from '../api/erros'
+import { SeloDaEtiqueta } from './etiquetas'
 import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
 import { LINHA_TOCAVEL, VIDRO } from './vidro'
 
@@ -69,7 +70,21 @@ const AVISO_DO_DESFECHO: Record<DesfechoDaProxima, string> = {
  * que o plano mudou daqui, e é ela quem incrementa a versão. `hoje` é o dia do plano, vindo do
  * servidor: é por ele que se sabe se a despesa volta atrasada.
  */
-export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number; hoje: string; aoDesfazer: () => void }) {
+interface HistoricoDePagasProps {
+  versao: number
+  hoje: string
+  /** As do plano, para o selo de cada paga. Uma etiqueta excluída já não marca nenhuma. */
+  etiquetas: Etiqueta[]
+  aoDesfazer: () => void
+}
+
+/** No mesmo lugar do plano: primeiro na linha. */
+function SeloDaPaga({ etiquetaId, etiquetas }: { etiquetaId: number | null; etiquetas: Etiqueta[] }) {
+  const etiqueta = etiquetaId === null ? undefined : etiquetas.find((candidata) => candidata.id === etiquetaId)
+  return etiqueta ? <SeloDaEtiqueta etiqueta={etiqueta} /> : null
+}
+
+export function HistoricoDePagas({ versao, hoje, etiquetas, aoDesfazer }: HistoricoDePagasProps) {
   const [aberto, setAberto] = useState(false)
   const [pagas, setPagas] = useState<DespesaPaga[]>([])
   const [pagina, setPagina] = useState(0)
@@ -226,7 +241,8 @@ export function HistoricoDePagas({ versao, hoje, aoDesfazer }: { versao: number;
                     ) : (
                       <>
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                          paga em {formatarData(despesa.dataPagamento)}
+                          <SeloDaPaga etiquetaId={despesa.etiquetaId} etiquetas={etiquetas} />
+                          <span>paga em {formatarData(despesa.dataPagamento)}</span>
                           {despesa.totalDeParcelas !== null && (
                             <span>
                               · parcela {despesa.parcela} de {despesa.totalDeParcelas}
