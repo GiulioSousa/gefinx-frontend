@@ -46,6 +46,12 @@ export function Modal({ titulo, aoFechar, fecharAoTocarFora = true, children }: 
       ref={dialogoRef}
       aria-labelledby={idDoTitulo}
       onCancel={(evento) => {
+        // Um modal aberto de dentro de outro — as etiquetas sobre o formulário da despesa —
+        // mora dentro dele na árvore do React, e o Esc do de cima subiria até o de baixo,
+        // fechando os dois. Cada um responde só ao próprio.
+        if (evento.target !== evento.currentTarget) {
+          return
+        }
         // O Esc fecharia o diálogo por conta própria, com o estado de quem o abriu ainda
         // dizendo "aberto". Quem decide é o estado.
         evento.preventDefault()
