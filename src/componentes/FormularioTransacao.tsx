@@ -154,21 +154,10 @@ export function FormularioTransacao({
     // Sem cartão próprio: o formulário só abre dentro do Modal, que já é o vidro em volta.
     <form onSubmit={aoSubmeter}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
-          <input
-            value={descricao}
-            onChange={(evento) => setDescricao(evento.target.value)}
-            required
-            data-foco-inicial
-            className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-            placeholder={ehTransferencia ? 'Ex: Reserva do mes' : 'Ex: Supermercado'}
-          />
-          <ErroDeCampo mensagem={errosPorCampo.descricao} />
-        </div>
-
-        {/* Três opções à vista, e não escondidas numa lista: o tipo muda quais campos o
-            formulário pede, então é melhor que ele se escolha antes de preencher o resto. A
+        {/* Primeiro campo do formulário, e com as três opções à vista em vez de escondidas
+            numa lista: é o tipo que decide quais campos vêm depois — categoria numa despesa ou
+            receita, conta de destino numa transferência —, e escolhê-lo antes de preencher o
+            resto evita digitar metade do formulário para descobrir que era de outro formato. A
             linha inteira, porque "Transferência" não cabe ao lado das outras em meia coluna. */}
         <fieldset className="sm:col-span-2">
           <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</legend>
@@ -197,6 +186,22 @@ export function FormularioTransacao({
             {avisoDeDescarte}
           </p>
         )}
+
+        {/* O foco inicial fica aqui, e não no primeiro campo: o tipo já vem escolhido —
+            despesa, ou o da transação em edição —, e cair num grupo de rádio faria a primeira
+            tecla trocar o tipo em vez de escrever. */}
+        <div className="sm:col-span-2">
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
+          <input
+            value={descricao}
+            onChange={(evento) => setDescricao(evento.target.value)}
+            required
+            data-foco-inicial
+            className="w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
+            placeholder={ehTransferencia ? 'Ex: Reserva do mes' : 'Ex: Supermercado'}
+          />
+          <ErroDeCampo mensagem={errosPorCampo.descricao} />
+        </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Valor</label>
