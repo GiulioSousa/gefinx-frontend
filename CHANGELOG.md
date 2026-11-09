@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0](https://github.com/GiulioSousa/gefinx-frontend/compare/v0.1.0...v0.2.0) (2026-11-09)
+
+
+### Funcionalidades
+
+* **api:** reconhece o custo diario e as receitas de hoje no planejamento ([659dc7e](https://github.com/GiulioSousa/gefinx-frontend/commit/659dc7edaebad1dce9d33d73f56ca0b68fa84713))
+* **planejamento:** mostra a media de cada categoria do custo diario ([19bc6e3](https://github.com/GiulioSousa/gefinx-frontend/commit/19bc6e30cac1d3d531c78c7cc0f2c145feafaabc))
+* **planejamento:** mostra o custo diario e so a meta e as receitas no cartao ([bfcdb73](https://github.com/GiulioSousa/gefinx-frontend/commit/bfcdb73b5508a108d6fd54c2814aa3810b839754))
+
 ## [0.1.0](https://github.com/GiulioSousa/gefinx-frontend/releases/tag/v0.1.0) (2026-11-09)
 
 Primeira versão marcada do GeFinX. Reúne a interface construída até aqui em React 19 com Vite e
