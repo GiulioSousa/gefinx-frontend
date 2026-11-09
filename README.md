@@ -26,6 +26,11 @@ Versão atual: **0.2.0**. Histórico completo no [CHANGELOG](CHANGELOG.md).
 
 ### 0.2.0 — 09/11/2026
 
+Custo diário na meta, e uma meta que acompanha cada lançamento. O cartão da meta passa a mostrar só
+a meta do dia e as receitas de hoje, sem barra de progresso; a barra fica só nas despesas
+planejadas. Um cartão novo, Custo diário, mostra a média de cada categoria escolhida nos últimos 30
+dias, pelos dias em que houve gasto nela, e abre a escolha das categorias. Requer o backend 0.2.0.
+
 **Funcionalidades**
 
 - **api:** reconhece o custo diario e as receitas de hoje no planejamento

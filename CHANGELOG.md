@@ -2,6 +2,10 @@
 
 ## [0.2.0](https://github.com/GiulioSousa/gefinx-frontend/compare/v0.1.0...v0.2.0) (2026-11-09)
 
+Custo diário na meta, e uma meta que acompanha cada lançamento. O cartão da meta passa a mostrar só
+a meta do dia e as receitas de hoje, sem barra de progresso; a barra fica só nas despesas
+planejadas. Um cartão novo, Custo diário, mostra a média de cada categoria escolhida nos últimos 30
+dias, pelos dias em que houve gasto nela, e abre a escolha das categorias. Requer o backend 0.2.0.
 
 ### Funcionalidades
 
