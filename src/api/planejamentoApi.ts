@@ -1,5 +1,5 @@
 import { clienteApi } from './clienteApi'
-import type { CalendarioDoAno, ContaDoPlanejamento, CorDaEtiqueta, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Etiqueta, Pagina, PeriodoSemTrabalho, Planejamento, Recorrencia } from '../tipos'
+import type { CalendarioDoAno, CategoriaDoPlanejamento, ContaDoPlanejamento, CorDaEtiqueta, DesfechoDaProxima, DespesaPaga, DespesaPlanejada, Etiqueta, Pagina, PeriodoSemTrabalho, Planejamento, Recorrencia } from '../tipos'
 
 export interface DadosDespesaPlanejada {
   descricao: string
@@ -82,6 +82,18 @@ export async function listarContasDoPlanejamento(): Promise<ContaDoPlanejamento[
 /** Manda a escolha inteira: as contas que não estiverem na lista entram no planejamento. */
 export async function definirContasDeFora(contasDeFora: number[]): Promise<ContaDoPlanejamento[]> {
   const { data } = await clienteApi.put<ContaDoPlanejamento[]>('/planejamento/contas', { contasDeFora })
+  return data
+}
+
+/** As categorias de despesa, cada uma dizendo se entra no custo diário. */
+export async function listarCategoriasDoPlanejamento(): Promise<CategoriaDoPlanejamento[]> {
+  const { data } = await clienteApi.get<CategoriaDoPlanejamento[]>('/planejamento/categorias')
+  return data
+}
+
+/** Manda a escolha inteira: lista vazia tira o custo diário da meta. */
+export async function definirCategoriasDoCustoDiario(categoriasDoCustoDiario: number[]): Promise<CategoriaDoPlanejamento[]> {
+  const { data } = await clienteApi.put<CategoriaDoPlanejamento[]>('/planejamento/categorias', { categoriasDoCustoDiario })
   return data
 }
 

@@ -160,27 +160,49 @@ export interface ItemDoPlanejamento extends DespesaPlanejada {
 }
 
 /**
+ * O gasto do dia a dia que a meta cobre: a média das categorias escolhidas nos 30 dias até
+ * ontem (`inicio` a `fim`), dividida pelos dias de trabalho do período. Não é despesa
+ * planejada: não tem prazo nem pagamento, porque o gasto de verdade já é lançado.
+ */
+export interface CustoDiario {
+  inicio: string
+  fim: string
+  total: number
+  diasDeTrabalho: number
+  porDia: number
+}
+
+/**
  * O plano do dia, calculado pelo servidor. `hoje` é o dia que ele considerou, no fuso
- * configurado. A meta sai do saldo do fim de ontem e fica parada durante o dia; o ganho de
- * hoje é o saldo de agora menos o de ontem, e `restanteHoje` o que ainda falta dele.
+ * configurado. A meta acompanha cada lançamento: é quanto ainda falta ganhar por dia, contando
+ * o resto de hoje, e já inclui o custo diário. `receitasDeHoje` é a soma das receitas do dia,
+ * sem descontar despesas.
  *
  * `pendente` é a parte da meta que não se divide por dias: o que falta das despesas atrasadas
  * ou sem dia de trabalho até o prazo. Fica somado à meta enquanto elas não forem pagas.
+ *
+ * `custoDiario` é nulo quando nenhuma categoria foi escolhida.
  *
  * `folgaDeHoje` é o motivo de hoje não contar como dia de trabalho — "Domingo", o nome do
  * feriado, a descrição do período —, e nulo quando conta.
  */
 export interface Planejamento {
   hoje: string
-  saldoDeOntem: number
   saldoAtual: number
-  ganhoDeHoje: number
+  receitasDeHoje: number
   metaDiaria: number
   pendente: number
-  restanteHoje: number
+  custoDiario: CustoDiario | null
   prazoDecisivo: string | null
   folgaDeHoje: string | null
   itens: ItemDoPlanejamento[]
+}
+
+/** Uma categoria de despesa, e se o gasto dela entra no custo diário da meta. */
+export interface CategoriaDoPlanejamento {
+  id: number
+  nome: string
+  entraNoCustoDiario: boolean
 }
 
 /**
