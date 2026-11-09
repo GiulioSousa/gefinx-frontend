@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { useConfirmacao, useEscolha } from '../contextos/ContextoConfirmacao'
-import type { Categoria, Conta, ContaDoPlanejamento, Etiqueta, ItemDoPlanejamento, Planejamento as Plano, Recorrencia, SituacaoDaDespesa } from '../tipos'
+import type { Categoria, CategoriaDoPlanejamento, Conta, ContaDoPlanejamento, Etiqueta, ItemDoPlanejamento, Planejamento as Plano, Recorrencia, SituacaoDaDespesa } from '../tipos'
 import * as planejamentoApi from '../api/planejamentoApi'
 import type { DadosDespesaPlanejada, DadosPagamento } from '../api/planejamentoApi'
 import { listarCategorias } from '../api/categoriasApi'
@@ -8,6 +8,7 @@ import { listarContas } from '../api/contasApi'
 import { ErroDeFormulario, extrairMensagemErro } from '../api/erros'
 import { BotaoFlutuante } from '../componentes/BotaoFlutuante'
 import { CalendarioDoPlanejamento } from '../componentes/CalendarioDoPlanejamento'
+import { EscolhaDeCategoriasDoCustoDiario } from '../componentes/EscolhaDeCategoriasDoCustoDiario'
 import { EscolhaDeContasDoPlanejamento } from '../componentes/EscolhaDeContasDoPlanejamento'
 import { CHIP, CLASSE_DA_COR } from '../componentes/coresDaEtiqueta'
 import { SeloDaEtiqueta } from '../componentes/etiquetas'
@@ -25,6 +26,10 @@ function formatarMoeda(valor: number): string {
 /** Com o dia da semana: quem trabalha de segunda a sábado conta o prazo por ele. */
 function formatarPrazo(data: string): string {
   return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+}
+
+function formatarDia(data: string): string {
+  return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
 function porcentagem(parte: number, todo: number): number {
@@ -123,6 +128,8 @@ function DetalheDoItem({ item, pendente }: { item: ItemDoPlanejamento; pendente:
 export function Planejamento() {
   const [plano, setPlano] = useState<Plano | null>(null)
   const [contas, setContas] = useState<ContaDoPlanejamento[]>([])
+  const [categoriasDoCusto, setCategoriasDoCusto] = useState<CategoriaDoPlanejamento[]>([])
+  const [mostrarCategorias, setMostrarCategorias] = useState(false)
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([])
   const [filtro, setFiltro] = useState<Filtro>(null)
   const grupoDoFiltro = useId()
@@ -147,14 +154,16 @@ export function Planejamento() {
   useEffect(() => {
     async function carregar() {
       try {
-        const [planoObtido, contasObtidas, etiquetasObtidas] = await Promise.all([
+        const [planoObtido, contasObtidas, etiquetasObtidas, categoriasObtidas] = await Promise.all([
           planejamentoApi.buscarPlanejamento(),
           planejamentoApi.listarContasDoPlanejamento(),
           planejamentoApi.listarEtiquetas(),
+          planejamentoApi.listarCategoriasDoPlanejamento(),
         ])
         setPlano(planoObtido)
         setContas(contasObtidas)
         setEtiquetas(etiquetasObtidas)
+        setCategoriasDoCusto(categoriasObtidas)
       } catch (excecao) {
         setErro(extrairMensagemErro(excecao, 'Não foi possível carregar o planejamento'))
       } finally {
@@ -275,6 +284,12 @@ export function Planejamento() {
     recarregar()
   }
 
+  async function salvarCategoriasDoCusto(categoriasDoCustoDiario: number[]) {
+    await planejamentoApi.definirCategoriasDoCustoDiario(categoriasDoCustoDiario)
+    setMostrarCategorias(false)
+    recarregar()
+  }
+
   if (carregando) {
     return <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
   }
@@ -370,6 +385,15 @@ export function Planejamento() {
             <h2 id="titulo-despesas" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               Despesas planejadas
             </h2>
+
+            {/* Fora do filtro por etiqueta: o custo diário não tem etiqueta, e filtrar é olhar só um grupo de despesas. */}
+            {filtroAtivo === null && (
+              <CartaoDoCustoDiario
+                custo={plano.custoDiario}
+                categorias={categoriasDoCusto.filter((categoria) => categoria.entraNoCustoDiario)}
+                aoEscolher={() => setMostrarCategorias(true)}
+              />
+            )}
 
             {plano.itens.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -579,87 +603,101 @@ export function Planejamento() {
           />
         </Modal>
       )}
+
+      {mostrarCategorias && (
+        <Modal titulo="Custo diário" aoFechar={() => setMostrarCategorias(false)}>
+          <EscolhaDeCategoriasDoCustoDiario
+            categorias={categoriasDoCusto}
+            aoSalvar={salvarCategoriasDoCusto}
+            aoCancelar={() => setMostrarCategorias(false)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }
 
 /**
- * A meta diária e o quanto dela já veio hoje. A meta fica parada durante o dia — sai do
- * saldo do fim de ontem —, e o que se ganha hoje enche a barra em vez de mudar o número.
+ * A meta do dia e as receitas de hoje, lado a lado, e mais nada. A meta acompanha cada
+ * lançamento — é quanto ainda falta ganhar por dia, contando o resto de hoje —, e as receitas
+ * são só a soma do que entrou, sem descontar despesas. Sem barra: com a meta se movendo a cada
+ * receita, uma barra de "quanto dela já veio" deixaria de ter um alvo fixo.
+ *
+ * Na folga — domingo, feriado, período sem trabalho — a meta vale para os próximos dias de
+ * trabalho, e o cartão diz o motivo. Quem decide é o servidor, que conhece o calendário de quem usa.
  */
 function CartaoDaMeta({ plano }: { plano: Plano }) {
-  const temMeta = plano.metaDiaria > 0
-
-  if (!temMeta) {
-    if (plano.itens.length === 0) {
-      return null
-    }
-    const algoDescoberto = plano.itens.some((item) => item.falta > 0)
-    return (
-      <div className={`rounded-lg p-4 sm:p-5 ${VIDRO}`}>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {/* Sem meta e com algo descoberto, o saldo de ontem cobria tudo: a falta veio do dia de hoje. */}
-          {algoDescoberto
-            ? 'O saldo de ontem cobria as despesas, mas o de agora não cobre mais: veja as despesas abaixo.'
-            : 'O saldo de agora cobre todas as despesas planejadas.'}
-        </p>
-      </div>
-    )
-  }
-
-  const cumprida = plano.restanteHoje <= 0
-  const ganhoVisivel = Math.max(0, plano.ganhoDeHoje)
-  // Na folga — domingo, feriado, período sem trabalho — hoje não entra na conta da meta, e uma
-  // barra de "hoje" pediria um ganho que o plano não espera: o cartão diz o motivo no lugar.
-  // Quem decide é o servidor, que conhece o calendário de quem usa.
   const folga = plano.folgaDeHoje
 
   return (
     <div className={`space-y-3 rounded-lg p-4 sm:p-5 ${VIDRO}`}>
-      <div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Ganhar por dia</p>
-        <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatarMoeda(plano.metaDiaria)}</p>
-        {plano.pendente > 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {formatarMoeda(plano.pendente)} pendentes, que ficam na meta até serem pagos
-            {plano.prazoDecisivo && (
-              <>
-                , mais {formatarMoeda(plano.metaDiaria - plano.pendente)} nos dias de trabalho, até{' '}
-                {formatarPrazo(plano.prazoDecisivo)}
-              </>
-            )}
-          </p>
-        ) : (
-          plano.prazoDecisivo && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              nos dias de trabalho, até {formatarPrazo(plano.prazoDecisivo)}
-            </p>
-          )
-        )}
-      </div>
+      <dl className="grid grid-cols-2 gap-4">
+        <div>
+          <dt className="text-sm text-slate-500 dark:text-slate-400">Meta do dia</dt>
+          <dd className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatarMoeda(plano.metaDiaria)}</dd>
+        </div>
+        <div>
+          <dt className="text-sm text-slate-500 dark:text-slate-400">Receitas de hoje</dt>
+          <dd className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
+            {formatarMoeda(plano.receitasDeHoje)}
+          </dd>
+        </div>
+      </dl>
 
-      {folga ? (
+      {folga && (
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Hoje não conta: <span className="font-medium">{folga}</span>. A meta vale para os próximos dias de trabalho.
         </p>
-      ) : (
-        <>
-          <Barra
-            valor={porcentagem(ganhoVisivel, plano.metaDiaria)}
-            rotulo={`Hoje: ${formatarMoeda(ganhoVisivel)} de ${formatarMoeda(plano.metaDiaria)}`}
-          />
-
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Hoje: {formatarMoeda(plano.ganhoDeHoje)} de {formatarMoeda(plano.metaDiaria)}
-            {' — '}
-            {cumprida ? (
-              <span className="font-medium text-emerald-700 dark:text-emerald-400">meta de hoje cumprida</span>
-            ) : (
-              <>faltam {formatarMoeda(plano.restanteHoje)}</>
-            )}
-          </p>
-        </>
       )}
+    </div>
+  )
+}
+
+/**
+ * O custo diário, no alto da lista: soma na meta como uma despesa de todo dia, mas não é uma
+ * despesa planejada — não tem prazo nem pagamento, e por isso nem barra. Tocar nele escolhe as
+ * categorias. Sem nenhuma escolhida, o cartão convida a escolher.
+ */
+function CartaoDoCustoDiario({
+  custo,
+  categorias,
+  aoEscolher,
+}: {
+  custo: Plano['custoDiario']
+  categorias: CategoriaDoPlanejamento[]
+  aoEscolher: () => void
+}) {
+  return (
+    <div className={`overflow-hidden rounded-lg ${VIDRO}`}>
+      <button type="button" onClick={aoEscolher} className={`${LINHA_TOCAVEL} block w-full space-y-1 p-4 text-left`}>
+        <span className="flex items-start justify-between gap-3">
+          <span className="font-medium text-slate-900 dark:text-slate-100">Custo diário</span>
+          {custo && (
+            <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
+              {formatarMoeda(custo.porDia)}
+              <span className="text-sm font-normal text-slate-500 dark:text-slate-400"> /dia</span>
+            </span>
+          )}
+        </span>
+
+        {custo ? (
+          <>
+            <span className="block text-sm text-slate-500 dark:text-slate-400">
+              {categorias.map((categoria) => categoria.nome).join(', ')} · média de 30 dias
+            </span>
+            <span className="block text-sm text-slate-600 dark:text-slate-300">
+              {custo.diasDeTrabalho > 0
+                ? `${formatarMoeda(custo.total)} de ${formatarDia(custo.inicio)} a ${formatarDia(custo.fim)}, em ${custo.diasDeTrabalho} dias de trabalho. Entra todo dia na meta.`
+                : `Sem dia de trabalho de ${formatarDia(custo.inicio)} a ${formatarDia(custo.fim)}: não há por quantos dias dividir.`}
+            </span>
+          </>
+        ) : (
+          <span className="block text-sm text-slate-600 dark:text-slate-300">
+            Escolha as categorias do dia a dia, como alimentação e combustível, para somar à meta a média do que se gastou
+            nelas nos últimos 30 dias.
+          </span>
+        )}
+      </button>
     </div>
   )
 }
