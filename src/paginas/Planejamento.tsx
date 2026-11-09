@@ -667,6 +667,8 @@ function CartaoDoCustoDiario({
   categorias: CategoriaDoPlanejamento[]
   aoEscolher: () => void
 }) {
+  const nomePorId = new Map(categorias.map((categoria) => [categoria.id, categoria.nome]))
+
   return (
     <div className={`overflow-hidden rounded-lg ${VIDRO}`}>
       <button type="button" onClick={aoEscolher} className={`${LINHA_TOCAVEL} block w-full space-y-1 p-4 text-left`}>
@@ -683,12 +685,25 @@ function CartaoDoCustoDiario({
         {custo ? (
           <>
             <span className="block text-sm text-slate-500 dark:text-slate-400">
-              {categorias.map((categoria) => categoria.nome).join(', ')} · média de 30 dias
+              Média de {formatarDia(custo.inicio)} a {formatarDia(custo.fim)}, nos dias com gasto. Entra todo dia na meta.
             </span>
-            <span className="block text-sm text-slate-600 dark:text-slate-300">
-              {custo.diasDeTrabalho > 0
-                ? `${formatarMoeda(custo.total)} de ${formatarDia(custo.inicio)} a ${formatarDia(custo.fim)}, em ${custo.diasDeTrabalho} dias de trabalho. Entra todo dia na meta.`
-                : `Sem dia de trabalho de ${formatarDia(custo.inicio)} a ${formatarDia(custo.fim)}: não há por quantos dias dividir.`}
+            <span className="block space-y-0.5 text-sm text-slate-600 dark:text-slate-300">
+              {custo.categorias.map((media) => (
+                <span key={media.categoriaId} className="flex items-baseline justify-between gap-3">
+                  <span>
+                    {nomePorId.get(media.categoriaId) ?? 'Categoria'}
+                    {media.diasComGasto > 0 ? (
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {' '}
+                        · {formatarMoeda(media.total)} em {media.diasComGasto} {media.diasComGasto === 1 ? 'dia' : 'dias'}
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 dark:text-slate-400"> · sem gasto no período</span>
+                    )}
+                  </span>
+                  <span className="shrink-0">{formatarMoeda(media.porDia)}</span>
+                </span>
+              ))}
             </span>
           </>
         ) : (

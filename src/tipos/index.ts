@@ -159,17 +159,26 @@ export interface ItemDoPlanejamento extends DespesaPlanejada {
   situacao: SituacaoDaDespesa
 }
 
+/** O que se gastou numa categoria nos 30 dias, em quantos dias distintos, e a média por esses dias. */
+export interface MediaDaCategoria {
+  categoriaId: number
+  total: number
+  diasComGasto: number
+  porDia: number
+}
+
 /**
- * O gasto do dia a dia que a meta cobre: a média das categorias escolhidas nos 30 dias até
- * ontem (`inicio` a `fim`), dividida pelos dias de trabalho do período. Não é despesa
- * planejada: não tem prazo nem pagamento, porque o gasto de verdade já é lançado.
+ * O gasto do dia a dia que a meta cobre, olhando os 30 dias até ontem (`inicio` a `fim`): cada
+ * categoria escolhida dividida pelos dias em que houve gasto nela, e `porDia` a soma dessas
+ * médias. `categorias` vem da maior média para a menor. Não é despesa planejada: não tem prazo
+ * nem pagamento, porque o gasto de verdade já é lançado.
  */
 export interface CustoDiario {
   inicio: string
   fim: string
   total: number
-  diasDeTrabalho: number
   porDia: number
+  categorias: MediaDaCategoria[]
 }
 
 /**
