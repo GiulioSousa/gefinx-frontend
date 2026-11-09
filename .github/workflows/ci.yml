@@ -1,0 +1,47 @@
+# Lint, checagem de tipos e build a cada push na main e a cada pull request.
+#
+# Os PRs que o release-please abre não disparam este workflow: são criados com o GITHUB_TOKEN, e o
+# GitHub não encadeia workflows por ele. O código deles já passou por aqui no push que os gerou.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Checagem de tipos e build
+        run: npm run build
+
+      # Sem VITE_API_URL o cliente usa /api, relativo: um endereço de desenvolvimento no bundle
+      # é sinal de variável de ambiente vazando para o build.
+      - name: Confere o bundle
+        run: |
+          if grep -o "localhost:[0-9]*" dist/assets/index-*.js; then
+            echo "O bundle aponta para um endereço de desenvolvimento" >&2
+            exit 1
+          fi
+
+      # Informativa: uma vulnerabilidade nova numa dependência não pode travar o lançamento de um
+      # código que não mudou. O aviso aparece no resumo da execução.
+      - name: Auditoria de dependências
+        continue-on-error: true
+        run: npm run auditoria
