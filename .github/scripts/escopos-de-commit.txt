@@ -1,0 +1,11 @@
+# Escopos aceitos nas mensagens de commit do frontend: as áreas da tela, e não as camadas.
+# Uma área nova entra aqui no mesmo commit que a cria. Ver conferir-commits.sh.
+auth
+painel
+transacoes
+categorias
+contas
+layout
+planejamento
+relatorios
+api
