@@ -22,7 +22,13 @@ atualizada automaticamente a cada release.
 
 <!-- versoes:inicio -->
 
-Versão atual: **0.2.0**. Histórico completo no [CHANGELOG](CHANGELOG.md).
+Versão atual: **0.3.0**. Histórico completo no [CHANGELOG](CHANGELOG.md).
+
+### 0.3.0 — 14/11/2026
+
+**Funcionalidades**
+
+- **planejamento:** permite marcar ate tres etiquetas e filtrar por varias
 
 ### 0.2.0 — 09/11/2026
 
