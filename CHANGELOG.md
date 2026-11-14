@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/GiulioSousa/gefinx-frontend/compare/v0.2.0...v0.3.0) (2026-11-14)
+
+
+### Funcionalidades
+
+* **planejamento:** permite marcar ate tres etiquetas e filtrar por varias ([50ab2b7](https://github.com/GiulioSousa/gefinx-frontend/commit/50ab2b7061d5c3af4ca503b793edd9ba61c77e9a))
+
 ## [0.2.0](https://github.com/GiulioSousa/gefinx-frontend/compare/v0.1.0...v0.2.0) (2026-11-09)
 
 Custo diário na meta, e uma meta que acompanha cada lançamento. O cartão da meta passa a mostrar só
