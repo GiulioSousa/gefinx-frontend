@@ -5,7 +5,7 @@ import type { DadosDespesaPlanejada } from '../api/planejamentoApi'
 import { ErroDeFormulario } from '../api/erros'
 import { CampoDeValor } from './CampoDeValor'
 import { ErroDeCampo } from './ErroDeCampo'
-import { CHIP, CLASSE_DA_COR } from './coresDaEtiqueta'
+import { CHIP, CLASSE_DA_COR, MAXIMO_DE_ETIQUETAS } from './coresDaEtiqueta'
 import { EditorDeEtiqueta } from './etiquetas'
 import { GerenciarEtiquetas } from './GerenciarEtiquetas'
 import { Modal } from './Modal'
@@ -54,10 +54,10 @@ export function FormularioDespesaPlanejada({
   const [recorrencia, setRecorrencia] = useState<Recorrencia | null>(despesaInicial?.recorrencia ?? null)
   const [parcela, setParcela] = useState(despesaInicial?.parcela?.toString() ?? '')
   const [totalDeParcelas, setTotalDeParcelas] = useState(despesaInicial?.totalDeParcelas?.toString() ?? '')
-  const [etiquetaEscolhida, setEtiquetaEscolhida] = useState<number | null>(despesaInicial?.etiquetaId ?? null)
+  const [etiquetasEscolhidas, setEtiquetasEscolhidas] = useState<number[]>(despesaInicial?.etiquetaIds ?? [])
   const [criandoEtiqueta, setCriandoEtiqueta] = useState(false)
   const [gerenciandoEtiquetas, setGerenciandoEtiquetas] = useState(false)
-  const grupoDaEtiqueta = useId()
+  const dicaDoLimite = useId()
   // A que menos muda vem marcada: só esta ocorrência.
   const [naSerie, setNaSerie] = useState(false)
   const editandoSerie = Boolean(despesaInicial?.recorrencia)
@@ -70,8 +70,13 @@ export function FormularioDespesaPlanejada({
   const numeroDaParcela = recorrencia ? numeroOuNulo(parcela) : null
   const numeroDoTotal = recorrencia ? numeroOuNulo(totalDeParcelas) : null
   const parcelada = numeroDaParcela !== null && numeroDoTotal !== null
-  // A escolhida pode ter sido excluída em "Gerenciar": aí a despesa fica sem etiqueta.
-  const etiquetaId = etiquetas.some((etiqueta) => etiqueta.id === etiquetaEscolhida) ? etiquetaEscolhida : null
+  // Uma escolhida pode ter sido excluída em "Gerenciar": ela sai, e as outras ficam.
+  const etiquetaIds = etiquetasEscolhidas.filter((id) => etiquetas.some((etiqueta) => etiqueta.id === id))
+  const noLimite = etiquetaIds.length >= MAXIMO_DE_ETIQUETAS
+
+  function alternarEtiqueta(id: number) {
+    setEtiquetasEscolhidas(etiquetaIds.includes(id) ? etiquetaIds.filter((escolhida) => escolhida !== id) : [...etiquetaIds, id])
+  }
 
   async function criarEtiqueta(dados: planejamentoApi.DadosEtiqueta) {
     let nova: Etiqueta
@@ -81,7 +86,10 @@ export function FormularioDespesaPlanejada({
       throw ErroDeFormulario.de(excecao, 'Não foi possível criar a etiqueta')
     }
     await aoMudarEtiquetas()
-    setEtiquetaEscolhida(nova.id)
+    // Quem cria uma etiqueta no formulário quer marcar a despesa com ela, se ainda houver vaga.
+    if (!noLimite) {
+      setEtiquetasEscolhidas([...etiquetaIds, nova.id])
+    }
     setCriandoEtiqueta(false)
   }
 
@@ -99,7 +107,7 @@ export function FormularioDespesaPlanejada({
           recorrencia,
           parcela: numeroDaParcela,
           totalDeParcelas: numeroDoTotal,
-          etiquetaId,
+          etiquetaIds,
         },
         editandoSerie && naSerie,
       )
@@ -148,35 +156,42 @@ export function FormularioDespesaPlanejada({
           <ErroDeCampo mensagem={errosPorCampo.prazo} />
         </div>
 
-        {/* Chips, e não uma lista: são poucas, e a cor só ajuda a reconhecer se estiver à vista. */}
-        <fieldset className="sm:col-span-2">
+        {/* Chips, e não uma lista: são poucas, e a cor só ajuda a reconhecer se estiver à vista.
+            "Nenhuma" fica marcada sem etiqueta, e marcá-la desmarca todas. Na terceira, as outras
+            se desabilitam: tirar uma libera a vaga. */}
+        <fieldset className="sm:col-span-2" aria-describedby={dicaDoLimite}>
           <legend className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Etiqueta <span className="font-normal text-slate-500 dark:text-slate-400">(opcional)</span>
+            Etiquetas{' '}
+            <span id={dicaDoLimite} className="font-normal text-slate-500 dark:text-slate-400">
+              (opcional, até {MAXIMO_DE_ETIQUETAS})
+            </span>
           </legend>
           <div className="flex flex-wrap gap-2">
             <label className={CHIP}>
               <input
-                type="radio"
-                name={grupoDaEtiqueta}
-                checked={etiquetaId === null}
-                onChange={() => setEtiquetaEscolhida(null)}
+                type="checkbox"
+                checked={etiquetaIds.length === 0}
+                onChange={() => setEtiquetasEscolhidas([])}
                 className="sr-only"
               />
               Nenhuma
             </label>
-            {etiquetas.map((etiqueta) => (
-              <label key={etiqueta.id} className={CHIP}>
-                <input
-                  type="radio"
-                  name={grupoDaEtiqueta}
-                  checked={etiquetaId === etiqueta.id}
-                  onChange={() => setEtiquetaEscolhida(etiqueta.id)}
-                  className="sr-only"
-                />
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full bg-current ${CLASSE_DA_COR[etiqueta.cor]}`} aria-hidden="true" />
-                {etiqueta.nome}
-              </label>
-            ))}
+            {etiquetas.map((etiqueta) => {
+              const marcada = etiquetaIds.includes(etiqueta.id)
+              return (
+                <label key={etiqueta.id} className={`${CHIP} has-disabled:cursor-not-allowed has-disabled:opacity-50`}>
+                  <input
+                    type="checkbox"
+                    checked={marcada}
+                    disabled={!marcada && noLimite}
+                    onChange={() => alternarEtiqueta(etiqueta.id)}
+                    className="sr-only"
+                  />
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full bg-current ${CLASSE_DA_COR[etiqueta.cor]}`} aria-hidden="true" />
+                  {etiqueta.nome}
+                </label>
+              )
+            })}
             {!criandoEtiqueta && (
               <button
                 type="button"
@@ -201,7 +216,7 @@ export function FormularioDespesaPlanejada({
               <EditorDeEtiqueta rotuloDoBotao="Criar" aoSalvar={criarEtiqueta} aoCancelar={() => setCriandoEtiqueta(false)} />
             </div>
           )}
-          <ErroDeCampo mensagem={errosPorCampo.etiquetaId} />
+          <ErroDeCampo mensagem={errosPorCampo.etiquetaIds} />
         </fieldset>
 
         {/* À vista, como o tipo da transação: são só três, e escondê-las numa lista faria a

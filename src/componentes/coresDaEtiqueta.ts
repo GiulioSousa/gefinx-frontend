@@ -25,14 +25,18 @@ export const CORES_DA_ETIQUETA: { cor: CorDaEtiqueta; rotulo: string; classe: st
   { cor: 'CINZA', rotulo: 'Cinza', classe: 'text-slate-600 dark:text-slate-300' },
 ]
 
-export const CLASSE_DA_COR = Object.fromEntries(CORES_DA_ETIQUETA.map(({ cor, classe }) => [cor, classe])) as Record<
+/** O mesmo limite do servidor (`DespesaPlanejada.MAXIMO_DE_ETIQUETAS`): o cartão e mais dois agrupamentos. */
+export const MAXIMO_DE_ETIQUETAS = 3
+
+export const CLASSE_DA_COR =Object.fromEntries(CORES_DA_ETIQUETA.map(({ cor, classe }) => [cor, classe])) as Record<
   CorDaEtiqueta,
   string
 >
 
 /**
  * Um chip de escolha entre etiquetas — no formulário e no filtro do plano. O marcado ganha a
- * borda verde, como as opções de "Aplicar a". Vai num `<label>` com o rádio escondido dentro.
+ * borda verde, como as opções de "Aplicar a". Vai num `<label>` com a caixa de marcação
+ * escondida dentro: as duas listas aceitam várias.
  */
 export const CHIP =
   'flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700 has-checked:border-emerald-600 has-checked:ring-1 has-checked:ring-emerald-600 has-focus-visible:outline-2 has-focus-visible:outline-emerald-500 dark:border-slate-700 dark:text-slate-300 dark:has-checked:border-emerald-400 dark:has-checked:ring-emerald-400'

@@ -10,8 +10,8 @@ export interface DadosDespesaPlanejada {
   /** Juntos ou nenhum, e só na que se repete: "2 de 6". */
   parcela?: number | null
   totalDeParcelas?: number | null
-  /** Ausente ou nula: sem etiqueta. */
-  etiquetaId?: number | null
+  /** Até três. Ausente ou vazia: sem etiqueta. */
+  etiquetaIds?: number[]
 }
 
 export async function buscarPlanejamento(): Promise<Planejamento> {
@@ -149,7 +149,7 @@ export async function atualizarEtiqueta(id: number, dados: DadosEtiqueta): Promi
   return data
 }
 
-/** As despesas que ela marcava ficam sem etiqueta, e nada mais muda nelas. */
+/** As despesas que ela marcava a perdem e ficam com as outras que tinham; nada mais muda nelas. */
 export async function excluirEtiqueta(id: number): Promise<void> {
   await clienteApi.delete(`/planejamento/etiquetas/${id}`)
 }

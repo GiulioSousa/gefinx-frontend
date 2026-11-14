@@ -3,7 +3,7 @@ import { useConfirmacao } from '../contextos/ContextoConfirmacao'
 import type { DesfechoDaProxima, DespesaPaga, Etiqueta, Recorrencia } from '../tipos'
 import { desfazerPagamento, listarDespesasPagas } from '../api/planejamentoApi'
 import { extrairMensagemErro } from '../api/erros'
-import { SeloDaEtiqueta } from './etiquetas'
+import { SelosDasEtiquetas } from './etiquetas'
 import { MenuFlutuante, OpcaoDoMenu } from './MenuFlutuante'
 import { LINHA_TOCAVEL, VIDRO } from './vidro'
 
@@ -76,12 +76,6 @@ interface HistoricoDePagasProps {
   /** As do plano, para o selo de cada paga. Uma etiqueta excluída já não marca nenhuma. */
   etiquetas: Etiqueta[]
   aoDesfazer: () => void
-}
-
-/** No mesmo lugar do plano: primeiro na linha. */
-function SeloDaPaga({ etiquetaId, etiquetas }: { etiquetaId: number | null; etiquetas: Etiqueta[] }) {
-  const etiqueta = etiquetaId === null ? undefined : etiquetas.find((candidata) => candidata.id === etiquetaId)
-  return etiqueta ? <SeloDaEtiqueta etiqueta={etiqueta} /> : null
 }
 
 export function HistoricoDePagas({ versao, hoje, etiquetas, aoDesfazer }: HistoricoDePagasProps) {
@@ -241,7 +235,8 @@ export function HistoricoDePagas({ versao, hoje, etiquetas, aoDesfazer }: Histor
                     ) : (
                       <>
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                          <SeloDaPaga etiquetaId={despesa.etiquetaId} etiquetas={etiquetas} />
+                          {/* No mesmo lugar do plano: primeiro na linha. */}
+                          <SelosDasEtiquetas ids={despesa.etiquetaIds} etiquetas={etiquetas} />
                           <span>paga em {formatarData(despesa.dataPagamento)}</span>
                           {despesa.totalDeParcelas !== null && (
                             <span>

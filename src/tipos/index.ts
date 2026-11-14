@@ -99,8 +99,9 @@ export type CorDaEtiqueta =
   | 'CINZA'
 
 /**
- * A marca de uma despesa planejada — de que cartão é a compra. Só visual. `despesas` é quantas
- * ela marca, pendentes e pagas: o que fica sem etiqueta se ela for excluída.
+ * Uma marca de despesa planejada — de que cartão é a compra, ou um agrupamento. Só visual, até
+ * três por despesa. `despesas` é quantas ela marca, pendentes e pagas: as que a perdem se ela
+ * for excluída.
  */
 export interface Etiqueta {
   id: number
@@ -120,8 +121,8 @@ export interface DespesaPlanejada {
   /** "2 de 6": o número desta ocorrência e o total; a série para na última. Nulos se não é parcelada. */
   parcela: number | null
   totalDeParcelas: number | null
-  /** Nula na despesa sem etiqueta. */
-  etiquetaId: number | null
+  /** Até três, sem repetição; vazia na despesa sem etiqueta. */
+  etiquetaIds: number[]
 }
 
 /**
@@ -235,7 +236,7 @@ export interface DespesaPaga {
   recorrencia: Recorrencia | null
   parcela: number | null
   totalDeParcelas: number | null
-  etiquetaId: number | null
+  etiquetaIds: number[]
 }
 
 /**

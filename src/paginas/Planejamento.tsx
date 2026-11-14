@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useConfirmacao, useEscolha } from '../contextos/ContextoConfirmacao'
 import type { Categoria, CategoriaDoPlanejamento, Conta, ContaDoPlanejamento, Etiqueta, ItemDoPlanejamento, Planejamento as Plano, Recorrencia, SituacaoDaDespesa } from '../tipos'
 import * as planejamentoApi from '../api/planejamentoApi'
@@ -11,7 +11,7 @@ import { CalendarioDoPlanejamento } from '../componentes/CalendarioDoPlanejament
 import { EscolhaDeCategoriasDoCustoDiario } from '../componentes/EscolhaDeCategoriasDoCustoDiario'
 import { EscolhaDeContasDoPlanejamento } from '../componentes/EscolhaDeContasDoPlanejamento'
 import { CHIP, CLASSE_DA_COR } from '../componentes/coresDaEtiqueta'
-import { SeloDaEtiqueta } from '../componentes/etiquetas'
+import { SelosDasEtiquetas } from '../componentes/etiquetas'
 import { FormularioDespesaPlanejada } from '../componentes/FormularioDespesaPlanejada'
 import { FormularioPagamento } from '../componentes/FormularioPagamento'
 import { HistoricoDePagas } from '../componentes/HistoricoDePagas'
@@ -66,8 +66,11 @@ const REPETICAO: Record<Recorrencia, string> = {
   MENSAL: 'todo mês',
 }
 
-/** O filtro das pendentes: uma etiqueta, as sem etiqueta, ou nenhum filtro. */
-type Filtro = number | 'SEM_ETIQUETA' | null
+/**
+ * Uma opção do filtro das pendentes: uma etiqueta, ou as sem etiqueta. O filtro é a lista das
+ * marcadas, e a despesa aparece se tiver qualquer uma delas; vazia, ele não filtra nada.
+ */
+type OpcaoDoFiltro = number | 'SEM_ETIQUETA'
 
 function Barra({ valor, rotulo }: { valor: number; rotulo: string }) {
   return (
@@ -131,8 +134,7 @@ export function Planejamento() {
   const [categoriasDoCusto, setCategoriasDoCusto] = useState<CategoriaDoPlanejamento[]>([])
   const [mostrarCategorias, setMostrarCategorias] = useState(false)
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([])
-  const [filtro, setFiltro] = useState<Filtro>(null)
-  const grupoDoFiltro = useId()
+  const [filtro, setFiltro] = useState<OpcaoDoFiltro[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const confirmar = useConfirmacao()
@@ -298,24 +300,29 @@ export function Planejamento() {
 
   const etiquetaPorId = new Map(etiquetas.map((etiqueta) => [etiqueta.id, etiqueta]))
   const itens = plano?.itens ?? []
-  const semEtiqueta = (item: ItemDoPlanejamento) => item.etiquetaId === null || !etiquetaPorId.has(item.etiquetaId)
+  // Um id que já não está na lista é de etiqueta excluída, e não conta.
+  const semEtiqueta = (item: ItemDoPlanejamento) => !item.etiquetaIds.some((id) => etiquetaPorId.has(id))
   // O filtro só oferece o que existe no plano: uma etiqueta sem pendente daria uma lista vazia.
-  const etiquetasNoPlano = etiquetas.filter((etiqueta) => itens.some((item) => item.etiquetaId === etiqueta.id))
+  const etiquetasNoPlano = etiquetas.filter((etiqueta) => itens.some((item) => item.etiquetaIds.includes(etiqueta.id)))
   const haSemEtiqueta = itens.some(semEtiqueta)
-  // Pagar a última despesa de uma etiqueta a tira do filtro; o filtro escolhido volta a "Todas".
-  const filtroAtivo: Filtro =
-    filtro === 'SEM_ETIQUETA'
+  // Pagar a última despesa de uma etiqueta a tira do filtro, e ela sai das marcadas; sem
+  // nenhuma marcada, o filtro volta a "Todas".
+  const filtroAtivo = filtro.filter((opcao) =>
+    opcao === 'SEM_ETIQUETA'
       ? haSemEtiqueta && etiquetasNoPlano.length > 0
-        ? filtro
-        : null
-      : etiquetasNoPlano.some((etiqueta) => etiqueta.id === filtro)
-        ? filtro
-        : null
-  const itensVisiveis =
-    filtroAtivo === null
-      ? itens
-      : itens.filter((item) => (filtroAtivo === 'SEM_ETIQUETA' ? semEtiqueta(item) : item.etiquetaId === filtroAtivo))
+      : etiquetasNoPlano.some((etiqueta) => etiqueta.id === opcao),
+  )
+  const filtrando = filtroAtivo.length > 0
+  const itensVisiveis = filtrando
+    ? itens.filter((item) =>
+        filtroAtivo.some((opcao) => (opcao === 'SEM_ETIQUETA' ? semEtiqueta(item) : item.etiquetaIds.includes(opcao))),
+      )
+    : itens
   const totalVisivel = itensVisiveis.reduce((soma, item) => soma + item.valor, 0)
+
+  function alternarNoFiltro(opcao: OpcaoDoFiltro) {
+    setFiltro(filtroAtivo.includes(opcao) ? filtroAtivo.filter((marcada) => marcada !== opcao) : [...filtroAtivo, opcao])
+  }
 
   return (
     <div className="space-y-6">
@@ -387,7 +394,7 @@ export function Planejamento() {
             </h2>
 
             {/* Fora do filtro por etiqueta: o custo diário não tem etiqueta, e filtrar é olhar só um grupo de despesas. */}
-            {filtroAtivo === null && (
+            {!filtrando && (
               <CartaoDoCustoDiario
                 custo={plano.custoDiario}
                 categorias={categoriasDoCusto.filter((categoria) => categoria.entraNoCustoDiario)}
@@ -405,14 +412,13 @@ export function Planejamento() {
               {/* Só aparece com alguma etiqueta em uso: sem ela, "Todas" seria a única opção. */}
               {etiquetasNoPlano.length > 0 && (
                 <fieldset className="space-y-2">
-                  <legend className="sr-only">Filtrar por etiqueta</legend>
+                  <legend className="sr-only">Filtrar por etiqueta: mostra as despesas com qualquer uma das marcadas</legend>
                   <div className="flex flex-wrap gap-2">
                     <label className={CHIP}>
                       <input
-                        type="radio"
-                        name={grupoDoFiltro}
-                        checked={filtroAtivo === null}
-                        onChange={() => setFiltro(null)}
+                        type="checkbox"
+                        checked={!filtrando}
+                        onChange={() => setFiltro([])}
                         className="sr-only"
                       />
                       Todas
@@ -420,10 +426,9 @@ export function Planejamento() {
                     {etiquetasNoPlano.map((etiqueta) => (
                       <label key={etiqueta.id} className={CHIP}>
                         <input
-                          type="radio"
-                          name={grupoDoFiltro}
-                          checked={filtroAtivo === etiqueta.id}
-                          onChange={() => setFiltro(etiqueta.id)}
+                          type="checkbox"
+                          checked={filtroAtivo.includes(etiqueta.id)}
+                          onChange={() => alternarNoFiltro(etiqueta.id)}
                           className="sr-only"
                         />
                         <span
@@ -436,10 +441,9 @@ export function Planejamento() {
                     {haSemEtiqueta && (
                       <label className={CHIP}>
                         <input
-                          type="radio"
-                          name={grupoDoFiltro}
-                          checked={filtroAtivo === 'SEM_ETIQUETA'}
-                          onChange={() => setFiltro('SEM_ETIQUETA')}
+                          type="checkbox"
+                          checked={filtroAtivo.includes('SEM_ETIQUETA')}
+                          onChange={() => alternarNoFiltro('SEM_ETIQUETA')}
                           className="sr-only"
                         />
                         Sem etiqueta
@@ -449,7 +453,7 @@ export function Planejamento() {
                   {/* O filtro é só da lista: a meta diária e o "faltam" de cada cartão continuam
                       contando todas, porque todas disputam o mesmo saldo. */}
                   <p aria-live="polite" className="text-sm text-slate-600 empty:hidden dark:text-slate-300">
-                    {filtroAtivo !== null && (
+                    {filtrando && (
                       <>
                         <span className="font-medium text-slate-900 dark:text-slate-100">
                           {itensVisiveis.length} {itensVisiveis.length === 1 ? 'despesa' : 'despesas'} ·{' '}
@@ -464,7 +468,6 @@ export function Planejamento() {
               <ul className="space-y-3">
                 {itensVisiveis.map((item) => {
                   const selo = SELO[item.situacao]
-                  const etiqueta = item.etiquetaId === null ? undefined : etiquetaPorId.get(item.etiquetaId)
                   const coberto = item.valor - Math.min(item.valor, item.falta)
                   return (
                     <li key={item.id} className={`overflow-hidden rounded-lg ${VIDRO}`}>
@@ -485,7 +488,7 @@ export function Planejamento() {
 
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
                           {/* Primeiro na linha: é o que se procura de relance ao correr a lista. */}
-                          {etiqueta && <SeloDaEtiqueta etiqueta={etiqueta} />}
+                          <SelosDasEtiquetas ids={item.etiquetaIds} etiquetas={etiquetas} />
                           <span>até {formatarPrazo(item.prazo)}</span>
                           {item.recorrencia && <span>· {REPETICAO[item.recorrencia]}</span>}
                           {item.totalDeParcelas !== null && (

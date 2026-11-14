@@ -41,9 +41,9 @@ export function GerenciarEtiquetas({ etiquetas, aoMudar }: GerenciarEtiquetasPro
     // O número vai na mensagem: é ele que diz o tamanho do que se perde.
     let mensagem = `Excluir a etiqueta "${etiqueta.nome}"? Ela não marca nenhuma despesa.`
     if (etiqueta.despesas === 1) {
-      mensagem = `Excluir a etiqueta "${etiqueta.nome}"? 1 despesa, pendente ou paga, está marcada com ela e ficará sem etiqueta. Valor e prazo não mudam.`
+      mensagem = `Excluir a etiqueta "${etiqueta.nome}"? 1 despesa, pendente ou paga, está marcada com ela e a perderá. As outras etiquetas dela, o valor e o prazo não mudam.`
     } else if (etiqueta.despesas > 1) {
-      mensagem = `Excluir a etiqueta "${etiqueta.nome}"? ${etiqueta.despesas} despesas, entre pendentes e pagas, estão marcadas com ela e ficarão sem etiqueta. Valores e prazos não mudam.`
+      mensagem = `Excluir a etiqueta "${etiqueta.nome}"? ${etiqueta.despesas} despesas, entre pendentes e pagas, estão marcadas com ela e a perderão. As outras etiquetas delas, os valores e os prazos não mudam.`
     }
     if (!(await confirmar({ titulo: 'Excluir etiqueta', mensagem, confirmar: 'Excluir', perigosa: true }))) {
       return

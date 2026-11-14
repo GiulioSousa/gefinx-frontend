@@ -23,6 +23,17 @@ export function SeloDaEtiqueta({ etiqueta }: { etiqueta: Pick<Etiqueta, 'nome' |
   )
 }
 
+/**
+ * Os selos de uma despesa, na ordem da lista de etiquetas — a de nome —, e não na ordem em que
+ * foram marcadas: assim "Nubank" fica sempre no mesmo lugar, de cartão em cartão. Um id que já
+ * não está na lista é de uma etiqueta excluída, e não aparece.
+ */
+export function SelosDasEtiquetas({ ids, etiquetas }: { ids: number[]; etiquetas: Etiqueta[] }) {
+  return etiquetas
+    .filter((etiqueta) => ids.includes(etiqueta.id))
+    .map((etiqueta) => <SeloDaEtiqueta key={etiqueta.id} etiqueta={etiqueta} />)
+}
+
 /** As dez bolinhas, como botões de rádio: as setas do teclado andam entre elas. */
 function EscolhaDeCor({ cor, aoMudar }: { cor: CorDaEtiqueta; aoMudar: (cor: CorDaEtiqueta) => void }) {
   const grupo = useId()
